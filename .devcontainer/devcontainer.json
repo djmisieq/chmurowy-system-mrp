@@ -5,7 +5,21 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "forwardPorts": [3000, 3001],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js App",
+      "onAutoForward": "openPreview"
+    },
+    "3001": {
+      "label": "Mock API"
+    }
+  },
   "postCreateCommand": "npm install",
+  "waitFor": "onCreateCommand",
+  "updateContentCommand": "npm run build",
+  "hostRequirements": {
+    "memory": "4gb"
+  },
   "customizations": {
     "vscode": {
       "extensions": [
