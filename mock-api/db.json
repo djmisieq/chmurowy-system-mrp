@@ -1,0 +1,23 @@
+{
+  "dashboard": {
+    "stats": [
+      { "name": "Otwarte zamówienia", "value": "15", "change": "+2", "changeType": "increase" },
+      { "name": "Produkty na magazynie", "value": "356", "change": "-12", "changeType": "decrease" },
+      { "name": "Produkty do zamówienia", "value": "23", "change": "+5", "changeType": "increase" },
+      { "name": "Planowane produkcje", "value": "8", "change": "+1", "changeType": "increase" }
+    ],
+    "inventorySummary": [
+      { "id": 1, "name": "Silnik podwieszany 40KM", "stock": 12, "threshold": 5, "status": "good" },
+      { "id": 2, "name": "Kadłub 18ft Classic", "stock": 3, "threshold": 5, "status": "warning" },
+      { "id": 3, "name": "Konsola sterowa Standard", "stock": 8, "threshold": 10, "status": "warning" },
+      { "id": 4, "name": "Zbiornik paliwa 100L", "stock": 2, "threshold": 8, "status": "critical" },
+      { "id": 5, "name": "Zestaw tapicerski Premium", "stock": 15, "threshold": 5, "status": "good" }
+    ],
+    "productionSchedule": [
+      { "id": 1, "product": "Classic 180", "quantity": 2, "status": "In Progress", "startDate": "2025-03-05", "endDate": "2025-03-15" },
+      { "id": 2, "product": "Sport 210", "quantity": 1, "status": "Scheduled", "startDate": "2025-03-18", "endDate": "2025-03-28" },
+      { "id": 3, "product": "Luxury 250", "quantity": 1, "status": "Scheduled", "startDate": "2025-04-01", "endDate": "2025-04-18" },
+      { "id": 4, "product": "Fishing Pro 190", "quantity": 3, "status": "Pending", "startDate": "2025-04-20", "endDate": "2025-05-10" }
+    ]
+  }
+}
