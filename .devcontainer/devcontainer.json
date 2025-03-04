@@ -12,8 +12,8 @@
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "bradlc.vscode-tailwindcss",
-        "formulahendry.auto-rename-tag",
-        "ms-vscode.vscode-typescript-next"
+        "ms-vscode.vscode-typescript-next",
+        "dsznajder.es7-react-js-snippets"
       ],
       "settings": {
         "editor.formatOnSave": true,
@@ -23,16 +23,5 @@
         }
       }
     }
-  },
-  "portsAttributes": {
-    "3000": {
-      "label": "Next.js App",
-      "onAutoForward": "openPreview"
-    },
-    "3001": {
-      "label": "Mock API",
-      "onAutoForward": "notify"
-    }
-  },
-  "remoteUser": "node"
+  }
 }
