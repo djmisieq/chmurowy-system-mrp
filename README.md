@@ -1,49 +1,65 @@
 # Chmurowy System MRP
 
-Chmurowy System MRP dla firmy produkującej łodzie motorowodne - frontend aplikacji oparty o React.js/Next.js.
+System planowania zasobów materiałowych (MRP) dla firmy zajmującej się produkcją łodzi motorowodnych.
 
-## Cele projektu
+## Uruchomienie projektu w GitHub Codespaces
 
-Stworzenie chmurowego systemu MRP (Material Requirements Planning) dla firmy zajmującej się produkcją łodzi motorowodnych. 
+### Automatyczne uruchomienie
+1. Przejdź do repozytorium na GitHub
+2. Kliknij zielony przycisk "Code"
+3. Wybierz zakładkę "Codespaces"
+4. Kliknij "Create codespace on main"
 
-## Architektura
+### Po otwarciu Codespaces
 
-W pierwszej fazie projektu skupiamy się wyłącznie na frontendzie z wykorzystaniem:
+1. **Uruchomienie aplikacji**:
+   ```bash
+   npm run dev
+   ```
 
-- **Next.js** - framework React do budowy interfejsu użytkownika
-- **Tailwind CSS** - dla stylowania
-- **JSON Server** - do mockowania API
-- **React Query** - do zarządzania stanem i cachingiem danych
-- **Zustand** - prosty manager stanu
+2. **Uruchomienie mockowego API** (w osobnym terminalu):
+   ```bash
+   npm run mock-api
+   ```
 
-## Uruchomienie projektu
+3. **Dostęp do aplikacji**:
+   - W zakładce "PORTS" znajdź port 3000
+   - Kliknij ikonę "globe" (świata) obok portu 3000, aby otworzyć aplikację w przeglądarce
+   - Możesz również użyć "Open in browser" z menu kontekstowego portu
 
-```bash
-# Instalacja zależności
-npm install
+### Rozwiązywanie problemów
 
-# Uruchomienie w trybie deweloperskim
-npm run dev
+Jeśli strona wyświetla błąd 502:
 
-# Uruchomienie mockowanego API
-npm run mock-api
-```
+1. Zatrzymaj serwer (Ctrl+C) i uruchom ponownie:
+   ```bash
+   npm run dev
+   ```
 
-## Struktura projektu
+2. Upewnij się, że port 3000 jest otwarty i publiczny:
+   - W zakładce "PORTS" kliknij prawym przyciskiem myszy na port 3000
+   - Wybierz "Port Visibility" -> "Public"
+
+3. Odśwież stronę w przeglądarce
+
+### Struktura projektu
 
 - `src/app`: Komponenty stron aplikacji (App Router)
-- `src/components`: Podzielone na komponenty współdzielone i komponenty specyficzne dla funkcjonalności
-- `src/types`: Typy TypeScript
+- `src/components`: Komponenty UI
+- `src/store`: Stan aplikacji (Zustand)
 - `src/services`: Komunikacja z API
 - `src/hooks`: Custom hooks
-- `src/store`: Zustand store 
+- `src/types`: Typy TypeScript
 - `mock-api`: Dane dla JSON Server
 
-## Faza MVP
+## Technologie
 
-Pierwszy etap projektu zakłada stworzenie podstawowego UI z wykorzystaniem mockowanych danych, obejmującego:
+- Next.js / React.js
+- Tailwind CSS
+- TypeScript
+- JSON Server (mockowane API)
+- Zustand (stan aplikacji)
 
-- Panel główny z kluczowymi wskaźnikami
-- Zarządzanie magazynem
-- Zarządzanie zamówieniami
-- Podstawowe planowanie produkcji
+## Faza projektu
+
+Aktualnie projekt jest w fazie MVP koncentrującej się na frontendzie. Backend zostanie dodany w późniejszym etapie.
