@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import MainLayout from '../../../components/layout/MainLayout';
 import ActionPanel from '../../../components/inventory/ActionPanel';
@@ -16,6 +17,8 @@ import {
 } from '../../../components/inventory/mockData';
 
 const InventoryItemsPage = () => {
+  const router = useRouter();
+  
   // Stan dla danych
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<InventoryItem[]>([]);
@@ -137,23 +140,19 @@ const InventoryItemsPage = () => {
   
   // Obsługa akcji dla elementów
   const handleEdit = (id: number) => {
-    alert(`Edycja elementu o ID: ${id}`);
-    // Tu będzie przekierowanie do formularza edycji lub otwarcie modalu
+    router.push(`/inventory/items/${id}/edit`);
   };
   
   const handleReceive = (id: number) => {
-    alert(`Przyjęcie na magazyn elementu o ID: ${id}`);
-    // Tu będzie obsługa przyjęcia na magazyn
+    router.push(`/inventory/operations/receive?itemId=${id}`);
   };
   
   const handleIssue = (id: number) => {
-    alert(`Wydanie z magazynu elementu o ID: ${id}`);
-    // Tu będzie obsługa wydania z magazynu
+    router.push(`/inventory/operations/issue?itemId=${id}`);
   };
   
   const handleHistory = (id: number) => {
-    alert(`Historia operacji dla elementu o ID: ${id}`);
-    // Tu będzie wyświetlenie historii operacji
+    router.push(`/inventory/items/${id}?tab=history`);
   };
   
   // Obliczenie całkowitej liczby stron
@@ -173,7 +172,7 @@ const InventoryItemsPage = () => {
       
       {/* Panel akcji */}
       <ActionPanel 
-        onAddNew={() => alert('Dodawanie nowego elementu')}
+        onAddNew={() => router.push('/inventory/items/new')}
         onImport={() => alert('Import z CSV/Excel')}
         onExport={() => alert('Eksport danych')}
         onPrint={() => alert('Drukowanie etykiet/kodów')}
