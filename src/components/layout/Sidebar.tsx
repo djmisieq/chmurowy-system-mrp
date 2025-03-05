@@ -15,9 +15,9 @@ import {
   ChevronRight,
   Boxes,
   ClipboardList,
-  TagsIcon,
   Repeat,
-  DatabaseIcon
+  Tag,
+  Database
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -48,9 +48,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       children: [
         { name: 'Przegląd', icon: Boxes, href: '/inventory' },
         { name: 'Inwentaryzacja', icon: ClipboardList, href: '/inventory/inventory' },
-        { name: 'Kategorie', icon: TagsIcon, href: '/inventory/categories' },
+        { name: 'Kategorie', icon: Tag, href: '/inventory/categories' },
         { name: 'Operacje', icon: Repeat, href: '/inventory/operations' },
-        { name: 'Raporty magazynowe', icon: DatabaseIcon, href: '/inventory/reports' },
+        { name: 'Raporty magazynowe', icon: Database, href: '/inventory/reports' },
       ]
     },
     { name: 'Raporty', icon: BarChart2, href: '/reports' },
@@ -166,44 +166,5 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     </div>
   );
 };
-
-// Dodanie brakujących ikon
-const TagsIcon = (props) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M9 5H2v7l6.29 6.29c.94.94 2.48.94 3.42 0l3.58-3.58c.94-.94.94-2.48 0-3.42L9 5Z" />
-    <path d="M6 9.01V9" />
-    <path d="m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19" />
-  </svg>
-);
-
-const DatabaseIcon = (props) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <ellipse cx="12" cy="5" rx="9" ry="3" />
-    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
-    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-  </svg>
-);
 
 export default Sidebar;
