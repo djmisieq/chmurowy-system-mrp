@@ -6,11 +6,89 @@ import { ArrowLeft } from 'lucide-react';
 import MainLayout from '../../../components/layout/MainLayout';
 import CategoryTree from '../../../components/inventory/categories/CategoryTree';
 import LocationManager from '../../../components/inventory/categories/LocationManager';
-import { mockCategories, mockLocations } from '../../../components/inventory/mockCategories';
+import CategoryForm from '../../../components/inventory/categories/CategoryForm';
+import LocationForm from '../../../components/inventory/categories/LocationForm';
+import { mockCategories, mockLocations, Category, Location } from '../../../components/inventory/mockCategories';
 
 const InventoryCategoriesPage = () => {
   // Stan aktywnych zakładek
   const [activeTab, setActiveTab] = useState<'categories' | 'locations'>('categories');
+  
+  // Stan formularzy
+  const [isCategoryFormOpen, setIsCategoryFormOpen] = useState(false);
+  const [isLocationFormOpen, setIsLocationFormOpen] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null);
+  const [editingLocationId, setEditingLocationId] = useState<number | null>(null);
+  const [parentCategoryId, setParentCategoryId] = useState<number | null>(null);
+  const [parentLocationId, setParentLocationId] = useState<number | null>(null);
+  
+  // Obsługa kategorii
+  const handleAddCategory = (parentId: number | null) => {
+    setParentCategoryId(parentId);
+    setEditingCategoryId(null);
+    setIsCategoryFormOpen(true);
+  };
+  
+  const handleEditCategory = (id: number) => {
+    setEditingCategoryId(id);
+    setParentCategoryId(null);
+    setIsCategoryFormOpen(true);
+  };
+  
+  const handleDeleteCategory = (id: number) => {
+    // W rzeczywistej aplikacji tutaj byłoby API call
+    alert(`Usuwanie kategorii o ID: ${id}`);
+  };
+  
+  const handleSaveCategory = (category: Partial<Category>) => {
+    // W rzeczywistej aplikacji tutaj byłoby API call
+    console.log('Zapisywanie kategorii:', category);
+    
+    if (editingCategoryId) {
+      alert(`Zaktualizowano kategorię: ${category.name}`);
+    } else {
+      alert(`Dodano nową kategorię: ${category.name}`);
+    }
+  };
+  
+  const handleAttributesManage = (id: number) => {
+    // W rzeczywistej aplikacji tutaj byłoby modalne okno dla atrybutów
+    alert(`Zarządzanie atrybutami kategorii o ID: ${id}`);
+  };
+  
+  // Obsługa lokalizacji
+  const handleAddLocation = (parentId: number | null) => {
+    setParentLocationId(parentId);
+    setEditingLocationId(null);
+    setIsLocationFormOpen(true);
+  };
+  
+  const handleEditLocation = (id: number) => {
+    setEditingLocationId(id);
+    setParentLocationId(null);
+    setIsLocationFormOpen(true);
+  };
+  
+  const handleDeleteLocation = (id: number) => {
+    // W rzeczywistej aplikacji tutaj byłoby API call
+    alert(`Usuwanie lokalizacji o ID: ${id}`);
+  };
+  
+  const handleSaveLocation = (location: Partial<Location>) => {
+    // W rzeczywistej aplikacji tutaj byłoby API call
+    console.log('Zapisywanie lokalizacji:', location);
+    
+    if (editingLocationId) {
+      alert(`Zaktualizowano lokalizację: ${location.name}`);
+    } else {
+      alert(`Dodano nową lokalizację: ${location.name}`);
+    }
+  };
+  
+  const handleItemsManage = (id: number) => {
+    // W rzeczywistej aplikacji tutaj byłoby przekierowanie lub modalne okno
+    alert(`Zarządzanie elementami w lokalizacji o ID: ${id}`);
+  };
   
   return (
     <MainLayout>
@@ -55,21 +133,38 @@ const InventoryCategoriesPage = () => {
         {activeTab === 'categories' ? (
           <CategoryTree 
             categories={mockCategories} 
-            onAddCategory={(parentId) => console.log(`Dodaj kategorię pod`, parentId)}
-            onEditCategory={(id) => console.log(`Edytuj kategorię`, id)}
-            onDeleteCategory={(id) => console.log(`Usuń kategorię`, id)}
-            onAttributesManage={(id) => console.log(`Zarządzaj atrybutami kategorii`, id)}
+            onAddCategory={handleAddCategory}
+            onEditCategory={handleEditCategory}
+            onDeleteCategory={handleDeleteCategory}
+            onAttributesManage={handleAttributesManage}
           />
         ) : (
           <LocationManager 
             locations={mockLocations}
-            onAddLocation={(parentId) => console.log(`Dodaj lokalizację pod`, parentId)}
-            onEditLocation={(id) => console.log(`Edytuj lokalizację`, id)}
-            onDeleteLocation={(id) => console.log(`Usuń lokalizację`, id)}
-            onItemsManage={(id) => console.log(`Zarządzaj elementami w lokalizacji`, id)}
+            onAddLocation={handleAddLocation}
+            onEditLocation={handleEditLocation}
+            onDeleteLocation={handleDeleteLocation}
+            onItemsManage={handleItemsManage}
           />
         )}
       </div>
+      
+      {/* Formularze */}
+      <CategoryForm 
+        isOpen={isCategoryFormOpen}
+        onClose={() => setIsCategoryFormOpen(false)}
+        onSave={handleSaveCategory}
+        editingCategoryId={editingCategoryId}
+        parentCategoryId={parentCategoryId}
+      />
+      
+      <LocationForm 
+        isOpen={isLocationFormOpen}
+        onClose={() => setIsLocationFormOpen(false)}
+        onSave={handleSaveLocation}
+        editingLocationId={editingLocationId}
+        parentLocationId={parentLocationId}
+      />
     </MainLayout>
   );
 };
