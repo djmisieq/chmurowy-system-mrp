@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Users, Calendar, CheckCircle, AlertTriangle, Download, Printer, Play, Check, XCircle } from 'lucide-react';
+import { ArrowLeft, Users, Calendar, CheckCircle, AlertTriangle, Download, Printer, Play, Check, XCircle, Search, BarChart2 } from 'lucide-react';
 import MainLayout from '../../../../components/layout/MainLayout';
 import { 
   getInventoryById, 
@@ -145,6 +145,10 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ params }) => 
     router.push(`/inventory/inventory/${inventory.id}/count?itemId=${itemId}`);
   };
   
+  const handleViewDiscrepancyReport = () => {
+    router.push(`/inventory/inventory/${inventory.id}/discrepancy`);
+  };
+  
   return (
     <MainLayout>
       <div className="mb-6 flex items-center">
@@ -178,6 +182,17 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ params }) => 
             Szczegóły inwentaryzacji
           </h3>
           <div className="flex flex-wrap gap-2">
+            {/* Nowy przycisk dla raportu rozbieżności */}
+            {(inventory.status === 'in_progress' || inventory.status === 'completed' || inventory.status === 'approved') && stats.itemsWithDifference > 0 && (
+              <button
+                onClick={handleViewDiscrepancyReport}
+                className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                <BarChart2 size={16} className="mr-1" />
+                Raport rozbieżności
+              </button>
+            )}
+            
             {/* Akcje dostępne dla wszystkich statusów */}
             <button
               onClick={handlePrint}
@@ -358,6 +373,14 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ params }) => 
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-500">Elementy z rozbieżnościami:</span>
                       <span className="text-sm font-medium text-gray-900">{stats.itemsWithDifference}</span>
+                      {stats.itemsWithDifference > 0 && (
+                        <button
+                          onClick={handleViewDiscrepancyReport}
+                          className="ml-2 text-xs text-primary-600 hover:text-primary-800 font-medium"
+                        >
+                          Zobacz raport
+                        </button>
+                      )}
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-500">Całkowita rozbieżność wartościowa:</span>
@@ -439,6 +462,19 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ params }) => 
                   </div>
                 </div>
               </div>
+              
+              {/* Przycisk raportu rozbieżności dla zakładki z rozbieżnościami */}
+              {activeTab === 'discrepancies' && stats.itemsWithDifference > 0 && (
+                <div className="mb-4 flex justify-end">
+                  <button
+                    onClick={handleViewDiscrepancyReport}
+                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                  >
+                    <BarChart2 size={16} className="mr-2" />
+                    Zobacz pełny raport rozbieżności
+                  </button>
+                </div>
+              )}
               
               {/* Tabela elementów */}
               {filteredItems.length === 0 ? (
