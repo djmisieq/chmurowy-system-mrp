@@ -1,39 +1,53 @@
 "use client";
 
 import React from 'react';
-import { PlusCircle, UploadCloud, Download, AlertTriangle } from 'lucide-react';
+import { PlusCircle, Upload, Download, FileSpreadsheet } from 'lucide-react';
 
 interface ActionPanelProps {
-  onAddNew: () => void;
-  onImport: () => void;
-  onExport: () => void;
+  onAddNew?: () => void;
+  onImport?: () => void;
+  onExport?: () => void;
+  onPrint?: () => void;
 }
 
-const ActionPanel: React.FC<ActionPanelProps> = ({ onAddNew, onImport, onExport }) => {
+const ActionPanel: React.FC<ActionPanelProps> = ({ 
+  onAddNew = () => {},
+  onImport = () => {},
+  onExport = () => {},
+  onPrint = () => {}
+}) => {
   return (
-    <div className="flex flex-wrap gap-3 mb-6">
+    <div className="bg-white p-4 rounded-lg shadow mb-4 flex flex-wrap gap-3">
       <button
         onClick={onAddNew}
-        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
       >
-        <PlusCircle className="mr-2 h-5 w-5" />
+        <PlusCircle size={18} className="mr-2" />
         Dodaj nowy element
       </button>
       
       <button
         onClick={onImport}
-        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
       >
-        <UploadCloud className="mr-2 h-5 w-5 text-gray-500" />
+        <Upload size={18} className="mr-2" />
         Importuj z CSV/Excel
       </button>
       
       <button
         onClick={onExport}
-        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
       >
-        <Download className="mr-2 h-5 w-5 text-gray-500" />
+        <Download size={18} className="mr-2" />
         Eksportuj dane
+      </button>
+      
+      <button
+        onClick={onPrint}
+        className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+      >
+        <FileSpreadsheet size={18} className="mr-2" />
+        Drukuj etykiety/kody
       </button>
     </div>
   );
