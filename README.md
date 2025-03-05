@@ -18,19 +18,26 @@ System MRP (Material Requirements Planning) dla firmy produkującej łodzie moto
 
 ## Struktura Projektu
 - `src/components/` - Komponenty React
-- `src/styles/` - Pliki stylów
-- `public/` - Zasoby statyczne
+- `src/app/` - Strony aplikacji (Next.js App Router)
+- `src/hooks/` - Niestandardowe hooki React
+- `src/store/` - Zarządzanie stanem aplikacji (Zustand)
+- `mock-api/` - Mockowane API dla testowania
 
 ## Uruchomienie Projektu
 1. Sklonuj repozytorium
 2. Zainstaluj zależności: `npm install`
-3. Uruchom serwer developmentu: `npm run dev`
+3. Uruchom serwer deweloperski i mock API: `npm run dev:all`
+
+## Uwagi dla Next.js App Router
+1. Komponenty używające hooków React (np. useState, useEffect) muszą zawierać dyrektywę `"use client";` na początku pliku
+2. Domyślnie wszystkie komponenty w Next.js 13+ są komponentami serwerowymi
+3. Dodaj bibliotekę lucide-react jeśli nie jest zainstalowana: `npm install lucide-react`
 
 ## Plan Rozwoju
 - [x] Inicjalizacja projektu
 - [x] Utworzenie podstawowego dashboardu
+- [x] Integracja z mock API
 - [ ] Implementacja modułu zamówień
-- [ ] Integracja z mock API
 - [ ] Dodanie systemu powiadomień
 
 ## Autor
