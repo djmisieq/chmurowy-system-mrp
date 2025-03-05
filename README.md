@@ -23,10 +23,35 @@ System MRP (Material Requirements Planning) dla firmy produkującej łodzie moto
 - `src/store/` - Zarządzanie stanem aplikacji (Zustand)
 - `mock-api/` - Mockowane API dla testowania
 
+## Zaimplementowane Moduły
+
+### Moduł Inwentaryzacji
+- **Przegląd Magazynu**: Monitorowanie stanów magazynowych
+- **Inwentaryzacja**:
+  - Planowanie inwentaryzacji (całościowej lub częściowej)
+  - Przeprowadzanie inwentaryzacji z arkuszami
+  - Wprowadzanie danych z możliwością skanowania kodów
+  - Raport rozbieżności inwentaryzacyjnych
+  - Korekta stanów magazynowych
+- **Kategorie Produktów**: Zarządzanie hierarchią produktów
+- **Operacje Magazynowe**: Przyjęcia, wydania, przesunięcia
+- **Raporty Magazynowe**: Analiza ruchu magazynowego
+
+### Moduł Zamówień
+- Lista zamówień klientów
+- Lista zamówień do dostawców
+- Monitorowanie statusów zamówień
+
 ## Uruchomienie Projektu
 1. Sklonuj repozytorium
 2. Zainstaluj zależności: `npm install`
 3. Uruchom serwer deweloperski i mock API: `npm run dev:all`
+
+## Testowanie
+Projekt zawiera testy jednostkowe dla kluczowych komponentów. Uruchom testy komendą:
+```
+npm test
+```
 
 ## Uwagi dla Next.js App Router
 1. Komponenty używające hooków React (np. useState, useEffect) muszą zawierać dyrektywę `"use client";` na początku pliku
@@ -37,8 +62,12 @@ System MRP (Material Requirements Planning) dla firmy produkującej łodzie moto
 - [x] Inicjalizacja projektu
 - [x] Utworzenie podstawowego dashboardu
 - [x] Integracja z mock API
-- [ ] Implementacja modułu zamówień
-- [ ] Dodanie systemu powiadomień
+- [x] Implementacja modułu magazynowego
+- [x] Rozwój funkcjonalności inwentaryzacji
+- [ ] Rozwój modułu zamówień
+- [ ] Implementacja modułu produkcji
+- [ ] Integracja z backendem (API)
+- [ ] System powiadomień i alertów
 
 ## Autor
 Dariusz Misięk (@djmisieq)
