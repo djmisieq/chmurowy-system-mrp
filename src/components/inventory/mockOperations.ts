@@ -1,8 +1,8 @@
-// Typ dla operacji magazynowych
+// Typy dla operacji magazynowych
 export interface InventoryOperation {
   id: number;
   itemId: number;
-  type: 'receipt' | 'issue' | 'transfer' | 'adjustment';
+  type: 'receipt' | 'issue' | 'transfer' | 'adjustment' | 'internal_receipt' | 'internal_issue' | 'inventory';
   quantity: number;
   date: string;
   documentNumber: string;
@@ -10,6 +10,22 @@ export interface InventoryOperation {
   description?: string;
   sourceLocation?: string;
   targetLocation?: string;
+  supplier?: string;
+  buyer?: string;
+  status: 'completed' | 'pending' | 'cancelled';
+  items?: OperationItem[];
+  externalDocument?: string;
+  totalValue?: number;
+}
+
+export interface OperationItem {
+  id: number;
+  itemId: number;
+  operationId: number;
+  quantity: number;
+  unitPrice?: number;
+  location?: string;
+  description?: string;
 }
 
 // Przykładowe operacje magazynowe
@@ -23,7 +39,11 @@ export const mockOperations: InventoryOperation[] = [
     documentNumber: 'PZ/2025/03/001',
     user: 'Jan Nowak',
     description: 'Dostawa od Marine Motors Sp. z o.o.',
-    targetLocation: 'A1-01'
+    targetLocation: 'A1-01',
+    supplier: 'Marine Motors Sp. z o.o.',
+    status: 'completed',
+    externalDocument: 'FV/2025/03/123',
+    totalValue: 60000
   },
   {
     id: 1002,
@@ -34,7 +54,9 @@ export const mockOperations: InventoryOperation[] = [
     documentNumber: 'WZ/2025/03/005',
     user: 'Anna Kowalska',
     description: 'Wydanie do produkcji łodzi Classic 180',
-    sourceLocation: 'A1-01'
+    sourceLocation: 'A1-01',
+    status: 'completed',
+    totalValue: 24000
   },
   {
     id: 1003,
@@ -46,7 +68,8 @@ export const mockOperations: InventoryOperation[] = [
     user: 'Tomasz Wiśniewski',
     description: 'Przesunięcie między magazynami',
     sourceLocation: 'A1-01',
-    targetLocation: 'A1-03'
+    targetLocation: 'A1-03',
+    status: 'completed'
   },
   {
     id: 1004,
@@ -57,7 +80,8 @@ export const mockOperations: InventoryOperation[] = [
     documentNumber: 'ADJ/2025/03/001',
     user: 'Marta Nowicka',
     description: 'Korekta po inwentaryzacji',
-    targetLocation: 'A1-01'
+    targetLocation: 'A1-01',
+    status: 'completed'
   },
   {
     id: 1005,
@@ -68,7 +92,11 @@ export const mockOperations: InventoryOperation[] = [
     documentNumber: 'PZ/2025/02/018',
     user: 'Jan Nowak',
     description: 'Dostawa od Yacht Parts S.A.',
-    targetLocation: 'B2-03'
+    targetLocation: 'B2-03',
+    supplier: 'Yacht Parts S.A.',
+    status: 'completed',
+    externalDocument: 'FV/2025/02/045',
+    totalValue: 50000
   },
   {
     id: 1006,
@@ -79,7 +107,9 @@ export const mockOperations: InventoryOperation[] = [
     documentNumber: 'WZ/2025/03/001',
     user: 'Anna Kowalska',
     description: 'Wydanie do produkcji łodzi Luxury 250',
-    sourceLocation: 'B2-03'
+    sourceLocation: 'B2-03',
+    status: 'completed',
+    totalValue: 25000
   },
   {
     id: 1007,
@@ -90,7 +120,11 @@ export const mockOperations: InventoryOperation[] = [
     documentNumber: 'PZ/2025/02/015',
     user: 'Jan Nowak',
     description: 'Dostawa od Yacht Parts S.A.',
-    targetLocation: 'C1-02'
+    targetLocation: 'C1-02',
+    supplier: 'Yacht Parts S.A.',
+    status: 'completed',
+    externalDocument: 'FV/2025/02/040',
+    totalValue: 55000
   },
   {
     id: 1008,
@@ -101,143 +135,258 @@ export const mockOperations: InventoryOperation[] = [
     documentNumber: 'WZ/2025/03/006',
     user: 'Anna Kowalska',
     description: 'Wydanie do produkcji łodzi Sport 210',
-    sourceLocation: 'C1-02'
+    sourceLocation: 'C1-02',
+    status: 'completed',
+    totalValue: 11000
+  },
+  {
+    id: 1009,
+    itemId: 5,
+    type: 'internal_receipt',
+    quantity: 5,
+    date: '2025-03-01',
+    documentNumber: 'PW/2025/03/001',
+    user: 'Tomasz Wiśniewski',
+    description: 'Przyjęcie z produkcji własnej',
+    targetLocation: 'E2-01',
+    status: 'completed',
+    totalValue: 22500
+  },
+  {
+    id: 1010,
+    itemId: 4,
+    type: 'internal_issue',
+    quantity: 4,
+    date: '2025-02-28',
+    documentNumber: 'RW/2025/02/010',
+    user: 'Marta Nowicka',
+    description: 'Wydanie do produkcji wewnętrznej',
+    sourceLocation: 'D3-04',
+    status: 'completed',
+    totalValue: 4800
+  },
+  {
+    id: 1011,
+    itemId: 8,
+    type: 'inventory',
+    quantity: -2,
+    date: '2025-03-05',
+    documentNumber: 'IN/2025/03/001',
+    user: 'Jan Nowak',
+    description: 'Korekta stanu po inwentaryzacji',
+    targetLocation: 'F1-01',
+    status: 'completed',
+    totalValue: -6400
+  },
+  {
+    id: 1012,
+    itemId: 10,
+    type: 'receipt',
+    quantity: 3,
+    date: '2025-03-06',
+    documentNumber: 'PZ/2025/03/005',
+    user: 'Tomasz Wiśniewski',
+    description: 'Dostawa od Marine Motors Sp. z o.o.',
+    targetLocation: 'A1-02',
+    supplier: 'Marine Motors Sp. z o.o.',
+    status: 'pending',
+    externalDocument: 'ZAM/2025/03/022',
+    totalValue: 54000
   }
 ];
 
-// Przykładowe produkty, w których używane są elementy magazynowe
-export interface Product {
+// Przykładowe dostawcy
+export interface Supplier {
   id: number;
   name: string;
-  modelNumber: string;
-  category: string;
-  usedItems: {
-    itemId: number;
-    quantity: number;
-  }[];
+  contact: string;
+  email: string;
+  address?: string;
+  nip?: string;
 }
 
-export const mockProducts: Product[] = [
-  {
-    id: 101,
-    name: 'Łódź Classic 180',
-    modelNumber: 'CL-180',
-    category: 'Motorowe',
-    usedItems: [
-      { itemId: 1, quantity: 1 },  // Silnik podwieszany 40KM
-      { itemId: 2, quantity: 1 },  // Kadłub 18ft Classic
-      { itemId: 3, quantity: 1 },  // Konsola sterowa Standard
-      { itemId: 4, quantity: 1 },  // Zbiornik paliwa 100L
-      { itemId: 6, quantity: 1 },  // Akumulator 120Ah
-      { itemId: 7, quantity: 1 }   // Oświetlenie LED nawigacyjne
-    ]
-  },
-  {
-    id: 102,
-    name: 'Łódź Sport 210',
-    modelNumber: 'SP-210',
-    category: 'Motorowe',
-    usedItems: [
-      { itemId: 10, quantity: 1 }, // Silnik podwieszany 60KM
-      { itemId: 11, quantity: 1 }, // Kadłub 21ft Sport
-      { itemId: 3, quantity: 1 },  // Konsola sterowa Standard
-      { itemId: 4, quantity: 1 },  // Zbiornik paliwa 100L
-      { itemId: 6, quantity: 1 },  // Akumulator 120Ah
-      { itemId: 7, quantity: 1 },  // Oświetlenie LED nawigacyjne
-      { itemId: 8, quantity: 1 }   // Nawigacja GPS morska
-    ]
-  },
-  {
-    id: 103,
-    name: 'Łódź Luxury 250',
-    modelNumber: 'LX-250',
-    category: 'Motorowe',
-    usedItems: [
-      { itemId: 10, quantity: 1 }, // Silnik podwieszany 60KM
-      { itemId: 11, quantity: 1 }, // Kadłub 21ft Sport
-      { itemId: 3, quantity: 1 },  // Konsola sterowa Standard
-      { itemId: 4, quantity: 2 },  // Zbiornik paliwa 100L (2 szt.)
-      { itemId: 5, quantity: 1 },  // Zestaw tapicerski Premium
-      { itemId: 6, quantity: 1 },  // Akumulator 120Ah
-      { itemId: 7, quantity: 1 },  // Oświetlenie LED nawigacyjne
-      { itemId: 8, quantity: 1 },  // Nawigacja GPS morska
-      { itemId: 12, quantity: 1 }  // Układ sterowania hydrauliczny
-    ]
-  }
-];
-
-// Przykładowe dokumenty powiązane z elementami magazynowymi
-export interface Document {
-  id: number;
-  itemId: number;
-  name: string;
-  type: 'manual' | 'certificate' | 'invoice' | 'specification' | 'drawing';
-  fileUrl: string;
-  uploadDate: string;
-  uploadedBy: string;
-}
-
-export const mockDocuments: Document[] = [
+export const mockSuppliers: Supplier[] = [
   {
     id: 1,
-    itemId: 1,
-    name: 'Instrukcja obsługi silnika 40KM.pdf',
-    type: 'manual',
-    fileUrl: '/documents/manual_engine_40km.pdf',
-    uploadDate: '2025-01-15',
-    uploadedBy: 'Jan Nowak'
+    name: 'Marine Motors Sp. z o.o.',
+    contact: '+48 123 456 789',
+    email: 'kontakt@marinemotors.pl',
+    address: 'ul. Portowa 15, 80-001 Gdańsk',
+    nip: '1234567890'
   },
   {
     id: 2,
-    itemId: 1,
-    name: 'Certyfikat CE silnika.pdf',
-    type: 'certificate',
-    fileUrl: '/documents/certificate_engine_40km.pdf',
-    uploadDate: '2025-01-15',
-    uploadedBy: 'Jan Nowak'
+    name: 'Yacht Parts S.A.',
+    contact: '+48 987 654 321',
+    email: 'info@yachtparts.com',
+    address: 'ul. Stoczniowa 7, 70-001 Szczecin',
+    nip: '0987654321'
   },
   {
     id: 3,
-    itemId: 1,
-    name: 'Faktura zakupu FV/2025/01/022.pdf',
-    type: 'invoice',
-    fileUrl: '/documents/invoice_engine_40km.pdf',
-    uploadDate: '2025-01-15',
-    uploadedBy: 'Anna Kowalska'
+    name: 'ElectroNautic',
+    contact: '+48 111 222 333',
+    email: 'sales@electronautic.eu',
+    address: 'ul. Elektroniczna 9, 81-001 Gdynia',
+    nip: '5556667770'
   },
   {
     id: 4,
-    itemId: 2,
-    name: 'Specyfikacja kadłuba 18ft.pdf',
-    type: 'specification',
-    fileUrl: '/documents/spec_hull_18ft.pdf',
-    uploadDate: '2025-01-20',
-    uploadedBy: 'Jan Nowak'
+    name: 'BoatSupplies',
+    contact: '+48 444 555 666',
+    email: 'office@boatsupplies.pl',
+    address: 'ul. Dostawcza 3, 72-001 Koszalin',
+    nip: '1112223330'
+  },
+];
+
+// Odbiorcy
+export interface Buyer {
+  id: number;
+  name: string;
+  contact: string;
+  email: string;
+  address?: string;
+  nip?: string;
+}
+
+export const mockBuyers: Buyer[] = [
+  {
+    id: 1,
+    name: 'Super Yachts Sp. z o.o.',
+    contact: '+48 222 333 444',
+    email: 'biuro@superyachts.pl',
+    address: 'ul. Żeglarska 12, 80-001 Gdańsk',
+    nip: '9998887770'
   },
   {
-    id: 5,
-    itemId: 2,
-    name: 'Rysunek techniczny kadłuba.dwg',
-    type: 'drawing',
-    fileUrl: '/documents/drawing_hull_18ft.dwg',
-    uploadDate: '2025-01-20',
-    uploadedBy: 'Tomasz Wiśniewski'
+    id: 2,
+    name: 'Water Sports Center',
+    contact: '+48 333 444 555',
+    email: 'kontakt@watersports.com',
+    address: 'ul. Sportowa 8, 70-001 Kołobrzeg',
+    nip: '8887776660'
+  },
+  {
+    id: 3,
+    name: 'Marina Nautical',
+    contact: '+48 555 666 777',
+    email: 'info@marinanautical.pl',
+    address: 'ul. Portowa 22, 80-001 Gdynia',
+    nip: '7776665550'
   }
 ];
 
-// Funkcja pomocnicza do pobierania historii operacji dla danego elementu
+// Magazyny
+export interface Warehouse {
+  id: number;
+  code: string;
+  name: string;
+  address?: string;
+  isActive: boolean;
+}
+
+export const mockWarehouses: Warehouse[] = [
+  {
+    id: 1,
+    code: 'MAG-01',
+    name: 'Magazyn główny',
+    address: 'ul. Produkcyjna 1, 80-001 Gdańsk',
+    isActive: true
+  },
+  {
+    id: 2,
+    code: 'MAG-02',
+    name: 'Magazyn produkcyjny',
+    address: 'ul. Produkcyjna 1, 80-001 Gdańsk',
+    isActive: true
+  },
+  {
+    id: 3,
+    code: 'MAG-03',
+    name: 'Magazyn wysyłkowy',
+    address: 'ul. Produkcyjna 1, 80-001 Gdańsk',
+    isActive: true
+  },
+  {
+    id: 4,
+    code: 'MAG-04',
+    name: 'Magazyn zewnętrzny',
+    address: 'ul. Spedycyjna 5, 81-001 Gdynia',
+    isActive: true
+  }
+];
+
+// Pobieranie operacji dla elementu
 export const getItemOperations = (itemId: number): InventoryOperation[] => {
   return mockOperations.filter(op => op.itemId === itemId);
 };
 
-// Funkcja pomocnicza do pobierania produktów, w których używany jest dany element
-export const getItemProducts = (itemId: number): Product[] => {
-  return mockProducts.filter(product => 
-    product.usedItems.some(item => item.itemId === itemId)
-  );
+// Pobieranie wszystkich operacji
+export const getAllOperations = (): InventoryOperation[] => {
+  return mockOperations;
 };
 
-// Funkcja pomocnicza do pobierania dokumentów powiązanych z danym elementem
-export const getItemDocuments = (itemId: number): Document[] => {
-  return mockDocuments.filter(doc => doc.itemId === itemId);
+// Pobieranie operacji wg ID
+export const getOperationById = (id: number): InventoryOperation | undefined => {
+  return mockOperations.find(op => op.id === id);
+};
+
+// Pobieranie dostawcy wg nazwy
+export const getSupplierByName = (name: string): Supplier | undefined => {
+  return mockSuppliers.find(s => s.name === name);
+};
+
+// Pobieranie odbiorcy wg nazwy
+export const getBuyerByName = (name: string): Buyer | undefined => {
+  return mockBuyers.find(b => b.name === name);
+};
+
+// Generowanie numeru dokumentu
+export const generateDocumentNumber = (type: string): string => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  let prefix = '';
+  switch (type) {
+    case 'receipt':
+      prefix = 'PZ';
+      break;
+    case 'issue':
+      prefix = 'WZ';
+      break;
+    case 'internal_receipt':
+      prefix = 'PW';
+      break;
+    case 'internal_issue':
+      prefix = 'RW';
+      break;
+    case 'transfer':
+      prefix = 'MM';
+      break;
+    case 'inventory':
+      prefix = 'IN';
+      break;
+    default:
+      prefix = 'DOK';
+  }
+  
+  // Get last document number for this type and increment
+  const lastDoc = mockOperations
+    .filter(op => op.type === type)
+    .map(op => op.documentNumber)
+    .sort()
+    .pop();
+  
+  let counter = 1;
+  if (lastDoc) {
+    const parts = lastDoc.split('/');
+    if (parts.length === 4) {
+      counter = parseInt(parts[3]) + 1;
+    }
+  }
+  
+  return `${prefix}/${year}/${month}/${String(counter).padStart(3, '0')}`;
 };
