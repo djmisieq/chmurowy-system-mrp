@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import { Edit, Package, ArrowUp, ArrowDown, Clock } from 'lucide-react';
 import { InventoryItem } from './mockData';
 
@@ -89,10 +90,14 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
             {items.map((item) => (
               <tr key={item.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {item.code}
+                  <Link href={`/inventory/items/${item.id}`} className="text-blue-600 hover:text-blue-900">
+                    {item.code}
+                  </Link>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {item.name}
+                  <Link href={`/inventory/items/${item.id}`} className="hover:text-blue-600">
+                    {item.name}
+                  </Link>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <span
