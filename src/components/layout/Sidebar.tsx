@@ -19,7 +19,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+    { name: 'Dashboard', icon: LayoutDashboard, href: '/' },
     { name: 'Zamówienia', icon: ShoppingCart, href: '/orders' },
     { name: 'Magazyn', icon: Package, href: '/inventory' },
     { name: 'Raporty', icon: BarChart2, href: '/reports' },
@@ -37,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     >
       <div className="flex items-center justify-between p-4 border-b">
         {isOpen && (
-          <h2 className="text-xl font-bold text-gray-800">MRP System</h2>
+          <h2 className="text-xl font-bold text-gray-800">Chmurowy MRP</h2>
         )}
         <button 
           onClick={toggleSidebar} 

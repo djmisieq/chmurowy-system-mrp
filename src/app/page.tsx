@@ -1,34 +1,80 @@
+"use client";
+
+import { useEffect, useState } from 'react';
 import MainLayout from '../components/layout/MainLayout';
+import axios from 'axios';
 
 export default function Home() {
-  // Przykładowe dane dla kart statystyk
-  const stats = [
-    { name: 'Otwarte zamówienia', value: '15', change: '+2', changeType: 'increase' },
-    { name: 'Produkty na magazynie', value: '356', change: '-12', changeType: 'decrease' },
-    { name: 'Produkty do zamówienia', value: '23', change: '+5', changeType: 'increase' },
-    { name: 'Planowane produkcje', value: '8', change: '+1', changeType: 'increase' },
-  ];
+  // Stany dla danych dashboardu
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [stats, setStats] = useState([]);
+  const [inventoryItems, setInventoryItems] = useState([]);
+  const [scheduleItems, setScheduleItems] = useState([]);
 
-  // Przykładowe dane dla stanu magazynu
-  const inventoryItems = [
-    { id: 1, name: 'Silnik podwieszany 40KM', stock: 12, threshold: 5, status: 'good' },
-    { id: 2, name: 'Kadłub 18ft Classic', stock: 3, threshold: 5, status: 'warning' },
-    { id: 3, name: 'Konsola sterowa Standard', stock: 8, threshold: 10, status: 'warning' },
-    { id: 4, name: 'Zbiornik paliwa 100L', stock: 2, threshold: 8, status: 'critical' },
-  ];
+  // Pobieranie danych z mock API
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('http://localhost:3001/dashboard');
+        const data = response.data;
+        
+        setStats(data.stats);
+        setInventoryItems(data.inventorySummary);
+        setScheduleItems(data.productionSchedule);
+        setError(false);
+      } catch (err) {
+        console.error('Błąd pobierania danych dashboardu:', err);
+        setError(true);
+        // W przypadku błędu API używamy danych zastępczych
+        setStats([
+          { name: 'Otwarte zamówienia', value: '15', change: '+2', changeType: 'increase' },
+          { name: 'Produkty na magazynie', value: '356', change: '-12', changeType: 'decrease' },
+          { name: 'Produkty do zamówienia', value: '23', change: '+5', changeType: 'increase' },
+          { name: 'Planowane produkcje', value: '8', change: '+1', changeType: 'increase' },
+        ]);
+        setInventoryItems([
+          { id: 1, name: 'Silnik podwieszany 40KM', stock: 12, threshold: 5, status: 'good' },
+          { id: 2, name: 'Kadłub 18ft Classic', stock: 3, threshold: 5, status: 'warning' },
+          { id: 3, name: 'Konsola sterowa Standard', stock: 8, threshold: 10, status: 'warning' },
+          { id: 4, name: 'Zbiornik paliwa 100L', stock: 2, threshold: 8, status: 'critical' },
+        ]);
+        setScheduleItems([
+          { id: 1, product: 'Classic 180', quantity: 2, status: 'In Progress', startDate: '2025-03-05', endDate: '2025-03-15' },
+          { id: 2, product: 'Sport 210', quantity: 1, status: 'Scheduled', startDate: '2025-03-18', endDate: '2025-03-28' },
+          { id: 3, product: 'Luxury 250', quantity: 1, status: 'Scheduled', startDate: '2025-04-01', endDate: '2025-04-18' },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Przykładowe dane dla harmonogramu produkcji
-  const scheduleItems = [
-    { id: 1, product: 'Classic 180', quantity: 2, status: 'In Progress', startDate: '2025-03-05', endDate: '2025-03-15' },
-    { id: 2, product: 'Sport 210', quantity: 1, status: 'Scheduled', startDate: '2025-03-18', endDate: '2025-03-28' },
-    { id: 3, product: 'Luxury 250', quantity: 1, status: 'Scheduled', startDate: '2025-04-01', endDate: '2025-04-18' },
-  ];
+    fetchDashboardData();
+  }, []);
+
+  // Komponent stanu ładowania
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <p className="ml-3 text-lg text-gray-600">Ładowanie danych...</p>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
       <div className="mb-6">
         <h2 className="text-2xl font-semibold text-gray-900">Dashboard</h2>
         <p className="mt-1 text-sm text-gray-500">Przegląd kluczowych wskaźników i zadań</p>
+        {error && (
+          <div className="mt-2 bg-red-50 p-3 rounded-md border border-red-200">
+            <p className="text-red-600">Wystąpił problem z pobieraniem danych. Wyświetlane są dane przykładowe.</p>
+          </div>
+        )}
       </div>
 
       {/* Karty statystyk */}
@@ -84,12 +130,12 @@ export default function Home() {
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
             <h3 className="text-lg leading-6 font-medium text-gray-900">Stan magazynu</h3>
-            <button
-              type="button"
+            <a
+              href="/inventory"
               className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
               Szczegóły
-            </button>
+            </a>
           </div>
           <div className="border-t border-gray-200">
             <div className="overflow-x-auto">
@@ -154,12 +200,12 @@ export default function Home() {
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
             <h3 className="text-lg leading-6 font-medium text-gray-900">Harmonogram produkcji</h3>
-            <button
-              type="button"
+            <a
+              href="/production"
               className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
               Szczegóły
-            </button>
+            </a>
           </div>
           <div className="border-t border-gray-200">
             <div className="overflow-x-auto">
