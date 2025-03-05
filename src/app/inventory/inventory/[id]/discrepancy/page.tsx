@@ -6,16 +6,8 @@ import Link from 'next/link';
 import { ArrowLeft, Save, FileText, CheckCircle } from 'lucide-react';
 import MainLayout from '../../../../../components/layout/MainLayout';
 import DiscrepancyReport from '../../../../../components/inventory/inventory/DiscrepancyReport';
-import { mockInventories, InventoryItem } from '../../../../../components/inventory/mockInventory';
-
-// Interfejs dla pozycji z rozbieżnością
-interface DiscrepancyItem extends InventoryItem {
-  bookQuantity: number;
-  actualQuantity: number;
-  difference: number;
-  differencePercent: number;
-  correctionApproved?: boolean;
-}
+import { mockInventories } from '../../../../../components/inventory/mockInventory';
+import { DiscrepancyItem, generateMockDiscrepancies } from '../../../../../components/inventory/mockDiscrepancies';
 
 const InventoryDiscrepancyPage = () => {
   const params = useParams();
@@ -41,49 +33,14 @@ const InventoryDiscrepancyPage = () => {
       // Symulacja opóźnienia odpowiedzi z serwera
       setTimeout(() => {
         // Generowanie danych testowych dla rozbieżności
-        // W rzeczywistej aplikacji, te dane pochodziłyby z API
-        const mockItems: InventoryItem[] = [
-          { id: 1, code: 'SIL-001', name: 'Silnik zaburtowy 40HP', category: 'Napęd', unit: 'szt', quantity: 12, minQuantity: 5, maxQuantity: 20, location: 'A-12-3' },
-          { id: 2, code: 'KAD-001', name: 'Kadłub 5.5m', category: 'Kadłuby', unit: 'szt', quantity: 4, minQuantity: 2, maxQuantity: 8, location: 'B-01-1' },
-          { id: 3, code: 'STE-002', name: 'Koło sterowe standard', category: 'Sterowanie', unit: 'szt', quantity: 25, minQuantity: 10, maxQuantity: 40, location: 'A-04-2' },
-          { id: 4, code: 'SIE-001', name: 'Siedzisko kapitańskie', category: 'Wyposażenie', unit: 'szt', quantity: 15, minQuantity: 5, maxQuantity: 25, location: 'C-07-4' },
-          { id: 5, code: 'PAL-001', name: 'Paliwo do testów', category: 'Materiały', unit: 'l', quantity: 120, minQuantity: 50, maxQuantity: 200, location: 'D-11-1' },
-          { id: 6, code: 'FRB-001', name: 'Farba biała podkładowa', category: 'Materiały', unit: 'l', quantity: 75, minQuantity: 30, maxQuantity: 100, location: 'D-02-3' },
-          { id: 7, code: 'LAM-001', name: 'Laminat - mata 450g', category: 'Materiały', unit: 'm2', quantity: 350, minQuantity: 100, maxQuantity: 500, location: 'D-03-1' },
-          { id: 8, code: 'ZYW-001', name: 'Żywica epoksydowa', category: 'Materiały', unit: 'kg', quantity: 180, minQuantity: 50, maxQuantity: 250, location: 'D-04-2' }
-        ];
-
-        // Generowanie danych o rozbieżnościach
-        const mockDiscrepancies: DiscrepancyItem[] = mockItems.map(item => {
-          // Losowe generowanie różnic (dla celów demonstracyjnych)
-          const variation = Math.random() > 0.6 
-            ? Math.floor(Math.random() * 10) - 5  // Generuj różnicę między -5 a +5
-            : 0;  // Brak różnicy
-          
-          const bookQuantity = item.quantity;
-          const actualQuantity = bookQuantity + variation;
-          const difference = actualQuantity - bookQuantity;
-          const differencePercent = bookQuantity !== 0 
-            ? (difference / bookQuantity) * 100 
-            : 0;
-          
-          return {
-            ...item,
-            bookQuantity,
-            actualQuantity,
-            difference,
-            differencePercent,
-            correctionApproved: false
-          };
-        });
-
+        const mockDiscrepancies = generateMockDiscrepancies(inventoryId);
         setDiscrepancies(mockDiscrepancies);
         setIsLoading(false);
       }, 500);
     };
 
     loadData();
-  }, [inventory, router]);
+  }, [inventory, router, inventoryId]);
 
   // Obsługa zatwierdzania pojedynczej korekty
   const handleApproveCorrection = (itemId: number) => {
@@ -143,6 +100,9 @@ const InventoryDiscrepancyPage = () => {
     return null;
   }
 
+  // Filtruj tylko pozycje z rozbieżnościami
+  const filteredDiscrepancies = discrepancies.filter(item => item.difference !== 0);
+
   return (
     <MainLayout>
       {/* Nagłówek strony */}
@@ -158,44 +118,65 @@ const InventoryDiscrepancyPage = () => {
         </div>
       </div>
 
-      {/* Raport rozbieżności */}
-      <DiscrepancyReport 
-        inventory={inventory}
-        discrepancies={discrepancies}
-        onApproveCorrection={handleApproveCorrection}
-        onApproveAll={handleApproveAll}
-        onGenerateReport={handleGenerateReport}
-        onSave={handleSave}
-      />
-      
-      {/* Pomocnicze przyciski nawigacyjne na dole strony */}
-      <div className="mt-6 flex justify-between">
-        <Link 
-          href={`/inventory/inventory/${inventoryId}`}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-        >
-          <ArrowLeft size={16} className="mr-2" />
-          Powrót do szczegółów
-        </Link>
-        
-        <div className="flex space-x-3">
-          <button
-            onClick={handleGenerateReport}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-          >
-            <FileText size={16} className="mr-2" />
-            Generuj raport PDF
-          </button>
-          
-          <button
-            onClick={handleSave}
-            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-          >
-            <Save size={16} className="mr-2" />
-            Zapisz korekty
-          </button>
+      {filteredDiscrepancies.length === 0 ? (
+        <div className="bg-white shadow-sm rounded-lg p-8 text-center">
+          <CheckCircle size={48} className="mx-auto text-green-500 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Brak rozbieżności inwentaryzacyjnych</h3>
+          <p className="text-gray-500">
+            Wszystkie stany magazynowe zgadzają się z oczekiwanymi ilościami.
+          </p>
+          <div className="mt-6">
+            <Link
+              href={`/inventory/inventory/${inventoryId}`}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            >
+              <ArrowLeft size={16} className="mr-2" />
+              Powrót do szczegółów inwentaryzacji
+            </Link>
+          </div>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Raport rozbieżności */}
+          <DiscrepancyReport 
+            inventory={inventory}
+            discrepancies={filteredDiscrepancies}
+            onApproveCorrection={handleApproveCorrection}
+            onApproveAll={handleApproveAll}
+            onGenerateReport={handleGenerateReport}
+            onSave={handleSave}
+          />
+          
+          {/* Pomocnicze przyciski nawigacyjne na dole strony */}
+          <div className="mt-6 flex justify-between">
+            <Link 
+              href={`/inventory/inventory/${inventoryId}`}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            >
+              <ArrowLeft size={16} className="mr-2" />
+              Powrót do szczegółów
+            </Link>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={handleGenerateReport}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                <FileText size={16} className="mr-2" />
+                Generuj raport PDF
+              </button>
+              
+              <button
+                onClick={handleSave}
+                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                <Save size={16} className="mr-2" />
+                Zapisz korekty
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </MainLayout>
   );
 };
