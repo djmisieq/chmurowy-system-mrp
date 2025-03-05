@@ -1,208 +1,176 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Search, Filter, SlidersHorizontal, X } from 'lucide-react';
+import { Search, Filter, ChevronDown, X } from 'lucide-react';
 
 interface FilterPanelProps {
+  onSearch: (query: string) => void;
+  onFilter: (filters: Record<string, string>) => void;
+  onSort: (field: string, direction: 'asc' | 'desc') => void;
   categories: string[];
   locations: string[];
-  suppliers: { id: number; name: string }[];
-  onSearch: (searchTerm: string) => void;
-  onFilterChange: (filters: FilterOptions) => void;
 }
 
-export interface FilterOptions {
-  category?: string;
-  location?: string;
-  supplier?: string;
-  stockStatus?: 'all' | 'low' | 'normal' | 'high';
-  sortBy?: 'name' | 'stock' | 'value';
-  sortOrder?: 'asc' | 'desc';
-}
-
-const FilterPanel: React.FC<FilterPanelProps> = ({
-  categories,
-  locations,
-  suppliers,
-  onSearch,
-  onFilterChange
+const FilterPanel: React.FC<FilterPanelProps> = ({ 
+  onSearch, 
+  onFilter, 
+  onSort,
+  categories = [],
+  locations = []
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [filters, setFilters] = useState<FilterOptions>({});
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    onSearch(e.target.value);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<Record<string, string>>({
+    category: '',
+    location: '',
+    status: ''
+  });
+  const [sortBy, setSortBy] = useState('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  
+  const handleSearch = () => {
+    onSearch(searchQuery);
   };
-
-  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    const newFilters = { ...filters, [name]: value === '' ? undefined : value };
+  
+  const handleFilterChange = (name: string, value: string) => {
+    const newFilters = { ...filters, [name]: value };
     setFilters(newFilters);
-    onFilterChange(newFilters);
+    onFilter(newFilters);
   };
-
+  
+  const handleSortChange = (field: string) => {
+    const direction = field === sortBy && sortDirection === 'asc' ? 'desc' : 'asc';
+    setSortBy(field);
+    setSortDirection(direction);
+    onSort(field, direction);
+  };
+  
   const clearFilters = () => {
-    setFilters({});
-    onFilterChange({});
+    const emptyFilters = Object.keys(filters).reduce((acc, key) => {
+      acc[key] = '';
+      return acc;
+    }, {} as Record<string, string>);
+    
+    setFilters(emptyFilters);
+    onFilter(emptyFilters);
   };
-
+  
   return (
-    <div className="bg-white rounded-lg shadow mb-6">
-      {/* Pasek wyszukiwania */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center">
-          <div className="flex-grow relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              placeholder="Szukaj elementów (kod, nazwa, kategoria...)"
-              className="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-primary-500 focus:border-primary-500"
-            />
-          </div>
-          
-          <button
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className="ml-3 inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+    <div className="bg-white p-4 rounded-lg shadow mb-4">
+      <div className="flex flex-wrap gap-3 items-center mb-4">
+        {/* Wyszukiwarka */}
+        <div className="flex-grow flex items-center relative min-w-[250px]">
+          <input
+            type="text"
+            placeholder="Szukaj po kodzie, nazwie..."
+            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          <Search 
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" 
+            size={20} 
+            onClick={handleSearch}
+          />
+        </div>
+        
+        {/* Przycisk filtrów */}
+        <button
+          className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <Filter size={18} className="mr-2" />
+          Filtry
+          <ChevronDown size={16} className={`ml-2 transform transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+        </button>
+        
+        {/* Sortowanie */}
+        <div className="relative">
+          <select
+            className="appearance-none pl-4 pr-10 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors focus:outline-none"
+            value={`${sortBy}-${sortDirection}`}
+            onChange={(e) => {
+              const [field, direction] = e.target.value.split('-');
+              handleSortChange(field);
+            }}
           >
-            <SlidersHorizontal className="mr-2 h-4 w-4" />
-            Filtry
-          </button>
+            <option value="name-asc">Nazwa: A-Z</option>
+            <option value="name-desc">Nazwa: Z-A</option>
+            <option value="stock-asc">Stan: rosnąco</option>
+            <option value="stock-desc">Stan: malejąco</option>
+            <option value="value-asc">Wartość: rosnąco</option>
+            <option value="value-desc">Wartość: malejąco</option>
+          </select>
+          <ChevronDown size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" />
         </div>
       </div>
-
-      {/* Zaawansowane filtry */}
-      {showAdvancedFilters && (
-        <div className="p-4 border-b border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* Kategoria */}
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                Kategoria
-              </label>
+      
+      {/* Panel filtrów rozszerzonych */}
+      {showFilters && (
+        <div className="border-t pt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Filtr kategorii */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Kategoria</label>
+            <div className="relative">
               <select
-                id="category"
-                name="category"
-                value={filters.category || ''}
-                onChange={handleFilterChange}
-                className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
+                className="w-full appearance-none pl-4 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={filters.category}
+                onChange={(e) => handleFilterChange('category', e.target.value)}
               >
-                <option value="">Wszystkie kategorie</option>
+                <option value="">Wszystkie</option>
                 {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
+                  <option key={category} value={category}>{category}</option>
                 ))}
               </select>
-            </div>
-
-            {/* Lokalizacja */}
-            <div>
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-                Lokalizacja
-              </label>
-              <select
-                id="location"
-                name="location"
-                value={filters.location || ''}
-                onChange={handleFilterChange}
-                className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
-              >
-                <option value="">Wszystkie lokalizacje</option>
-                {locations.map((location) => (
-                  <option key={location} value={location}>
-                    {location}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Dostawca */}
-            <div>
-              <label htmlFor="supplier" className="block text-sm font-medium text-gray-700 mb-1">
-                Dostawca
-              </label>
-              <select
-                id="supplier"
-                name="supplier"
-                value={filters.supplier || ''}
-                onChange={handleFilterChange}
-                className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
-              >
-                <option value="">Wszyscy dostawcy</option>
-                {suppliers.map((supplier) => (
-                  <option key={supplier.id} value={supplier.name}>
-                    {supplier.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Stan magazynowy */}
-            <div>
-              <label htmlFor="stockStatus" className="block text-sm font-medium text-gray-700 mb-1">
-                Stan magazynowy
-              </label>
-              <select
-                id="stockStatus"
-                name="stockStatus"
-                value={filters.stockStatus || ''}
-                onChange={handleFilterChange}
-                className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
-              >
-                <option value="">Wszystkie stany</option>
-                <option value="low">Niski stan</option>
-                <option value="normal">Normalny stan</option>
-                <option value="high">Wysoki stan</option>
-              </select>
-            </div>
-
-            {/* Sortowanie */}
-            <div>
-              <label htmlFor="sortBy" className="block text-sm font-medium text-gray-700 mb-1">
-                Sortuj według
-              </label>
-              <div className="flex space-x-2">
-                <select
-                  id="sortBy"
-                  name="sortBy"
-                  value={filters.sortBy || ''}
-                  onChange={handleFilterChange}
-                  className="block w-1/2 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
-                >
-                  <option value="">Wybierz</option>
-                  <option value="name">Nazwa</option>
-                  <option value="stock">Stan</option>
-                  <option value="value">Wartość</option>
-                </select>
-                <select
-                  id="sortOrder"
-                  name="sortOrder"
-                  value={filters.sortOrder || ''}
-                  onChange={handleFilterChange}
-                  className="block w-1/2 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
-                >
-                  <option value="">Kolejność</option>
-                  <option value="asc">Rosnąco</option>
-                  <option value="desc">Malejąco</option>
-                </select>
-              </div>
+              <ChevronDown size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" />
             </div>
           </div>
-
-          {/* Przyciski akcji dla filtrów */}
-          <div className="flex justify-end mt-4">
+          
+          {/* Filtr lokalizacji */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Lokalizacja</label>
+            <div className="relative">
+              <select
+                className="w-full appearance-none pl-4 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={filters.location}
+                onChange={(e) => handleFilterChange('location', e.target.value)}
+              >
+                <option value="">Wszystkie</option>
+                {locations.map((location) => (
+                  <option key={location} value={location}>{location}</option>
+                ))}
+              </select>
+              <ChevronDown size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" />
+            </div>
+          </div>
+          
+          {/* Filtr statusu */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <div className="relative">
+              <select
+                className="w-full appearance-none pl-4 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={filters.status}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
+              >
+                <option value="">Wszystkie</option>
+                <option value="good">OK</option>
+                <option value="warning">Niski stan</option>
+                <option value="critical">Krytyczny</option>
+              </select>
+              <ChevronDown size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" />
+            </div>
+          </div>
+          
+          {/* Przycisk czyszczenia filtrów */}
+          <div className="md:col-span-3 flex justify-end mt-2">
             <button
+              className="flex items-center px-3 py-1 text-sm text-gray-600 hover:text-gray-900"
               onClick={clearFilters}
-              className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
-              <X className="mr-2 h-4 w-4" />
-              Wyczyść filtry
+              <X size={16} className="mr-1" />
+              Wyczyść wszystkie filtry
             </button>
           </div>
         </div>
