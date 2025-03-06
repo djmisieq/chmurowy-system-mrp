@@ -1,175 +1,302 @@
-import MainLayout from '../../components/layout/MainLayout';
+"use client";
 
+import React, { useState, useEffect } from 'react';
+import MainLayout from '../../components/layout/MainLayout';
+import StatCard from '../../components/dashboard/StatCard';
+import StatusTable from '../../components/dashboard/StatusTable';
+import ChartCard from '../../components/dashboard/ChartCard';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import { Factory, Clock, AlertTriangle, CheckCircle, Workflow, Tool } from 'lucide-react';
+
+// Przykładowe dane dla strony produkcji
+const MOCK_PRODUCTION_STATS = [
+  { name: 'Aktywne zlecenia', value: '8', change: '+3', changeType: 'increase' },
+  { name: 'Zakończone (miesiąc)', value: '12', change: '+2', changeType: 'increase' },
+  { name: 'Wydajność', value: '94%', change: '+1.5%', changeType: 'increase' },
+  { name: 'Obciążenie linii', value: '76%', change: '-5%', changeType: 'decrease' },
+];
+
+const MOCK_PRODUCTION_ORDERS = [
+  { 
+    id: 1, 
+    name: 'Classic 180', 
+    quantity: 2, 
+    progress: 65, 
+    status: 'In Progress', 
+    startDate: '2025-03-05', 
+    endDate: '2025-03-15',
+    assignee: 'Zespół A'
+  },
+  { 
+    id: 2, 
+    name: 'Sport 210', 
+    quantity: 1, 
+    progress: 0, 
+    status: 'Scheduled', 
+    startDate: '2025-03-18', 
+    endDate: '2025-03-28',
+    assignee: 'Zespół B'
+  },
+  { 
+    id: 3, 
+    name: 'Luxury 250', 
+    quantity: 1, 
+    progress: 0, 
+    status: 'Scheduled', 
+    startDate: '2025-04-01', 
+    endDate: '2025-04-18',
+    assignee: 'Zespół C'
+  },
+  { 
+    id: 4, 
+    name: 'Fishing Pro 190', 
+    quantity: 3, 
+    progress: 0, 
+    status: 'Pending', 
+    startDate: '2025-04-20', 
+    endDate: '2025-05-10',
+    assignee: 'Zespół A'
+  },
+];
+
+const MOCK_PRODUCTION_ISSUES = [
+  { 
+    id: 1, 
+    description: 'Opóźnienie dostawy silników', 
+    impact: 'high', 
+    status: 'active', 
+    reportDate: '2025-03-04',
+    affectedOrders: 'Classic 180, Sport 210'
+  },
+  { 
+    id: 2, 
+    description: 'Konieczność wymiany uszkodzonych form', 
+    impact: 'medium', 
+    status: 'resolved', 
+    reportDate: '2025-03-01',
+    resolveDate: '2025-03-03',
+    affectedOrders: 'Classic 180'
+  },
+  { 
+    id: 3, 
+    description: 'Brak pracowników w zespole tapicerskim', 
+    impact: 'medium', 
+    status: 'active', 
+    reportDate: '2025-03-05',
+    affectedOrders: 'Luxury 250'
+  },
+];
+
+// Przykładowe dane dla wykresów
+const PRODUCTION_PERFORMANCE_DATA = [
+  { name: 'Tydzień 1', planowane: 4, zrealizowane: 3 },
+  { name: 'Tydzień 2', planowane: 5, zrealizowane: 5 },
+  { name: 'Tydzień 3', planowane: 6, zrealizowane: 5 },
+  { name: 'Tydzień 4', planowane: 7, zrealizowane: 6 },
+  { name: 'Tydzień 5', planowane: 5, zrealizowane: 5 },
+  { name: 'Tydzień 6', planowane: 4, zrealizowane: 4 },
+];
+
+const PRODUCTION_EFFICIENCY_DATA = [
+  { name: 'Kadłub', wydajność: 92 },
+  { name: 'Lakierowanie', wydajność: 88 },
+  { name: 'Montaż elektroniki', wydajność: 95 },
+  { name: 'Montaż silnika', wydajność: 97 },
+  { name: 'Tapicerka', wydajność: 90 },
+  { name: 'Kontrola jakości', wydajność: 98 },
+];
+
+/**
+ * Strona przeglądu produkcji
+ */
 export default function ProductionPage() {
-  // Przykładowe dane
-  const productionPlans = [
-    { id: 'PROD-2025-001', modelName: 'Classic 180', quantity: 2, startDate: '2025-03-05', endDate: '2025-03-15', status: 'in-progress', completionRate: 35 },
-    { id: 'PROD-2025-002', modelName: 'Sport 210', quantity: 1, startDate: '2025-03-18', endDate: '2025-03-28', status: 'scheduled', completionRate: 0 },
-    { id: 'PROD-2025-003', modelName: 'Luxury 250', quantity: 1, startDate: '2025-04-01', endDate: '2025-04-18', status: 'scheduled', completionRate: 0 },
-    { id: 'PROD-2025-004', modelName: 'Fishing Pro 190', quantity: 3, startDate: '2025-04-20', endDate: '2025-05-10', status: 'pending', completionRate: 0 },
-    { id: 'PROD-2025-005', modelName: 'Classic 180', quantity: 1, startDate: '2025-05-15', endDate: '2025-05-25', status: 'pending', completionRate: 0 },
-  ];
+  const [loading, setLoading] = useState(false);
+  const [productionStats, setProductionStats] = useState(MOCK_PRODUCTION_STATS);
+  const [productionOrders, setProductionOrders] = useState(MOCK_PRODUCTION_ORDERS);
+  const [productionIssues, setProductionIssues] = useState(MOCK_PRODUCTION_ISSUES);
+  const [performanceData, setPerformanceData] = useState(PRODUCTION_PERFORMANCE_DATA);
+  const [efficiencyData, setEfficiencyData] = useState(PRODUCTION_EFFICIENCY_DATA);
+
+  // Tutaj w rzeczywistej aplikacji pobieralibyśmy dane z API
+
+  // Renderuj pasek postępu dla zleceń produkcyjnych
+  const renderProgressBar = (progress: number) => {
+    return (
+      <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+        <div 
+          className="bg-primary-600 h-2.5 rounded-full" 
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    );
+  };
+
+  // Renderuj badge statusu dla problemów produkcyjnych
+  const renderIssueStatus = (status: string, impact: string) => {
+    if (status === 'active') {
+      return impact === 'high' 
+        ? <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Aktywny</span>
+        : <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Aktywny</span>;
+    }
+    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Rozwiązany</span>;
+  };
 
   return (
     <MainLayout>
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900">Planowanie produkcji</h2>
-        <p className="mt-1 text-sm text-gray-500">Zarządzaj planami produkcji i harmonogramami</p>
+        <h2 className="text-2xl font-semibold text-gray-900">Produkcja</h2>
+        <p className="mt-1 text-sm text-gray-500">Przegląd aktualnych zleceń produkcyjnych i wydajności</p>
       </div>
-      
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <div className="px-4 py-5 sm:px-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-          <div className="relative w-full sm:w-64">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              name="search"
-              id="search"
-              className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
-              placeholder="Wyszukaj plany produkcji"
-            />
-          </div>
-          <div className="flex space-x-2">
-            <button
-              type="button"
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="-ml-0.5 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-              Filtruj
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="-ml-0.5 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Nowy plan
-            </button>
-          </div>
-        </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Numer
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Model
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ilość
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Harmonogram
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Postęp
-                </th>
-                <th scope="col" className="relative px-6 py-3">
-                  <span className="sr-only">Akcje</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {productionPlans.map((plan) => (
-                <tr key={plan.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {plan.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {plan.modelName}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {plan.quantity}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {plan.startDate} - {plan.endDate}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        plan.status === 'in-progress'
-                          ? 'bg-blue-100 text-blue-800'
-                          : plan.status === 'scheduled'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
-                      {plan.status === 'in-progress'
-                        ? 'W trakcie'
-                        : plan.status === 'scheduled'
-                        ? 'Zaplanowane'
-                        : 'Oczekujące'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div 
-                        className="bg-primary-600 h-2.5 rounded-full" 
-                        style={{ width: `${plan.completionRate}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-xs text-gray-500 mt-1">{plan.completionRate}%</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <a href="#" className="text-primary-600 hover:text-primary-900 mr-4">Edytuj</a>
-                    <a href="#" className="text-primary-600 hover:text-primary-900">Szczegóły</a>
-                  </td>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        {productionStats.map((stat, index) => (
+          <StatCard
+            key={index}
+            title={stat.name}
+            value={stat.value}
+            change={stat.change}
+            changeType={stat.changeType}
+            icon={
+              index === 0 ? <Workflow size={20} /> :
+              index === 1 ? <CheckCircle size={20} /> :
+              index === 2 ? <Tool size={20} /> :
+              <Factory size={20} />
+            }
+            iconBgColor={
+              index === 0 ? "bg-primary-100" :
+              index === 1 ? "bg-success-50" :
+              index === 2 ? "bg-accent-100" :
+              "bg-warning-50"
+            }
+            iconTextColor={
+              index === 0 ? "text-primary-600" :
+              index === 1 ? "text-success-500" :
+              index === 2 ? "text-accent-600" :
+              "text-warning-500"
+            }
+          />
+        ))}
+      </div>
+
+      {/* Wykresy */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 mb-6">
+        <ChartCard
+          title="Realizacja produkcji"
+          subtitle="Planowane vs. zrealizowane zlecenia produkcyjne"
+          chartType="bar"
+          data={performanceData}
+          dataKeys={['planowane', 'zrealizowane']}
+          colors={['#0ea5e9', '#10b981']}
+          action={
+            <Button href="/production/performance" size="sm" variant="outline">
+              Pełny raport
+            </Button>
+          }
+        />
+        <ChartCard
+          title="Wydajność linii produkcyjnych"
+          subtitle="Procentowe wykorzystanie mocy produkcyjnych"
+          chartType="bar"
+          data={efficiencyData}
+          dataKeys={['wydajność']}
+          colors={['#0ea5e9']}
+          action={
+            <Button href="/production/resources" size="sm" variant="outline">
+              Szczegóły
+            </Button>
+          }
+        />
+      </div>
+
+      {/* Aktywne zlecenia produkcyjne */}
+      <div className="mb-6">
+        <StatusTable
+          title="Aktywne zlecenia produkcyjne"
+          detailsUrl="/production/orders"
+          columns={[
+            { key: 'name', header: 'Produkt' },
+            { key: 'quantity', header: 'Ilość' },
+            { 
+              key: 'progress', 
+              header: 'Postęp', 
+              render: (progress) => (
+                <div className="w-full max-w-xs">
+                  <div className="flex justify-between mb-1 text-xs">
+                    <span>{progress}%</span>
+                  </div>
+                  {renderProgressBar(progress)}
+                </div>
+              )
+            },
+            { 
+              key: 'status', 
+              header: 'Status', 
+              render: (status) => <StatusTable.StatusBadge status={status} /> 
+            },
+            { 
+              key: 'assignee', 
+              header: 'Przypisane', 
+            },
+            { 
+              key: 'startDate', 
+              header: 'Data', 
+              render: (startDate, item) => `${startDate} - ${item.endDate}` 
+            }
+          ]}
+          data={productionOrders}
+        />
+      </div>
+
+      {/* Problemy produkcyjne */}
+      <div className="mb-6">
+        <Card 
+          title="Problemy produkcyjne" 
+          subtitle="Aktualne problemy wpływające na produkcję"
+          action={
+            <Button 
+              href="/production/issues" 
+              size="sm" 
+              variant="outline"
+              icon={<AlertTriangle size={16} />}
+            >
+              Zarządzaj
+            </Button>
+          }
+        >
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Problem</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data zgłoszenia</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wpływ na</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-          <div className="flex-1 flex justify-between sm:hidden">
-            <a href="#" className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-              Poprzednie
-            </a>
-            <a href="#" className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-              Następne
-            </a>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {productionIssues.map((issue, index) => (
+                  <tr key={index}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{issue.description}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {renderIssueStatus(issue.status, issue.impact)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {issue.reportDate}
+                      {issue.resolveDate && <div className="text-xs text-green-600">Rozwiązane: {issue.resolveDate}</div>}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {issue.affectedOrders}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Pokazuje <span className="font-medium">1</span> do <span className="font-medium">5</span> z{' '}
-                <span className="font-medium">5</span> planów
-              </p>
-            </div>
-            <div>
-              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                <a href="#" className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                  <span className="sr-only">Poprzednie</span>
-                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </a>
-                <a href="#" aria-current="page" className="z-10 bg-primary-50 border-primary-500 text-primary-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                  1
-                </a>
-                <a href="#" className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                  <span className="sr-only">Następne</span>
-                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                  </svg>
-                </a>
-              </nav>
-            </div>
-          </div>
-        </div>
+        </Card>
       </div>
     </MainLayout>
   );
