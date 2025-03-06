@@ -1,0 +1,1 @@
+To jest plik testowy sprawdzający, czy zmiany w repozytorium są widoczne w działającej aplikacji.
