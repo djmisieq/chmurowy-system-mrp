@@ -24,7 +24,10 @@ import {
   Factory,
   Clock,
   PieChart,
-  X
+  X,
+  Hammer,
+  Tool,
+  Workflow
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -44,7 +47,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, isMobileView =
   const pathname = usePathname();
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
     'Magazyn': true, // Rozwinięty domyślnie
-    'Zamówienia': true // Rozwinięty domyślnie
+    'Zamówienia': true, // Rozwinięty domyślnie
+    'Produkcja': true, // Rozwinięty domyślnie
   });
   
   // Reset expanded items when sidebar is closed (for desktop view)
@@ -65,9 +69,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, isMobileView =
         { name: 'Zamówienia klientów', icon: ShoppingBag, href: '/orders/sales' },
         { name: 'Zamówienia do dostawców', icon: Truck, href: '/orders/purchase' },
         { name: 'Planowanie zakupów', icon: CalendarDays, href: '/orders/planning' },
-        { name: 'Zlecenia produkcyjne', icon: Factory, href: '/orders/production' },
         { name: 'Historia zamówień', icon: Clock, href: '/orders/history' },
         { name: 'Raporty zamówień', icon: PieChart, href: '/orders/reports' },
+      ]
+    },
+    { 
+      name: 'Produkcja', 
+      icon: Factory, 
+      href: '/production',
+      children: [
+        { name: 'Przegląd', icon: LayoutDashboard, href: '/production' },
+        { name: 'Zlecenia produkcyjne', icon: Workflow, href: '/production/orders' },
+        { name: 'Planowanie produkcji', icon: CalendarDays, href: '/production/planning' },
+        { name: 'Stany zasobów', icon: Tool, href: '/production/resources' },
+        { name: 'Historia produkcji', icon: Clock, href: '/production/history' },
+        { name: 'Wydajność produkcji', icon: PieChart, href: '/production/performance' },
       ]
     },
     { 
