@@ -1,0 +1,195 @@
+{
+  "salesOrders": [
+    {
+      "id": "so-001",
+      "orderNumber": "SO-2025-001",
+      "customerName": "Marina Sport",
+      "customerContact": "Jan Kowalski",
+      "customerEmail": "j.kowalski@marinasport.pl",
+      "deliveryAddress": "ul. Portowa 15, 80-001 Gdańsk",
+      "orderDate": "2025-02-20",
+      "requestedDeliveryDate": "2025-04-15",
+      "creationDate": "2025-02-20T10:15:00Z",
+      "lastModified": "2025-02-20T10:15:00Z",
+      "status": "confirmed",
+      "priority": "normal",
+      "paymentTerms": "30 dni",
+      "paymentStatus": "pending",
+      "notes": "Standardowa konfiguracja, klient zainteresowany dodatkowymi akcesoriami.",
+      "totalValue": 120000,
+      "items": [
+        {
+          "id": "item-001",
+          "productId": "prod-classic180",
+          "productName": "Classic 180",
+          "quantity": 1,
+          "unitPrice": 120000,
+          "unit": "szt",
+          "lineTotal": 120000,
+          "status": "in_production"
+        }
+      ]
+    },
+    {
+      "id": "so-002",
+      "orderNumber": "SO-2025-002",
+      "customerName": "Yacht Club Sopot",
+      "customerContact": "Anna Nowak",
+      "customerEmail": "a.nowak@ycs.pl",
+      "deliveryAddress": "ul. Żeglarska 8, 81-198 Sopot",
+      "orderDate": "2025-02-25",
+      "requestedDeliveryDate": "2025-05-10",
+      "creationDate": "2025-02-25T14:30:00Z",
+      "lastModified": "2025-03-01T09:45:00Z",
+      "status": "in_production",
+      "priority": "high",
+      "paymentTerms": "Zaliczka 30%, reszta przy odbiorze",
+      "paymentStatus": "partial",
+      "notes": "Wersja z dodatkowymi opcjami nawigacyjnymi, konieczne konsultacje techniczne.",
+      "totalValue": 185000,
+      "relatedProductionOrderId": "po-002",
+      "items": [
+        {
+          "id": "item-002",
+          "productId": "prod-sport210",
+          "productName": "Sport 210",
+          "quantity": 1,
+          "unitPrice": 160000,
+          "unit": "szt",
+          "lineTotal": 160000,
+          "status": "in_production"
+        },
+        {
+          "id": "item-003",
+          "productId": "prod-navig-premium",
+          "productName": "Pakiet nawigacyjny Premium",
+          "quantity": 1,
+          "unitPrice": 25000,
+          "unit": "szt",
+          "lineTotal": 25000,
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "so-003",
+      "orderNumber": "SO-2025-003",
+      "customerName": "Rental Boats",
+      "customerContact": "Piotr Wiśniewski",
+      "customerEmail": "p.wisniewski@rentalboats.pl",
+      "deliveryAddress": "ul. Rybacka 22, 72-500 Międzyzdroje",
+      "orderDate": "2025-03-01",
+      "requestedDeliveryDate": "2025-06-01",
+      "creationDate": "2025-03-01T11:20:00Z",
+      "lastModified": "2025-03-01T11:20:00Z",
+      "status": "draft",
+      "priority": "normal",
+      "paymentTerms": "Leasing 36 miesięcy",
+      "paymentStatus": "pending",
+      "notes": "Zamówienie dla firmy czarterowej, negocjacje cenowe w toku.",
+      "totalValue": 350000,
+      "items": [
+        {
+          "id": "item-004",
+          "productId": "prod-fishingpro190",
+          "productName": "Fishing Pro 190",
+          "quantity": 2,
+          "unitPrice": 140000,
+          "unit": "szt",
+          "lineTotal": 280000,
+          "status": "draft"
+        },
+        {
+          "id": "item-005",
+          "productId": "prod-engine-60hp",
+          "productName": "Silnik zaburtowy 60HP",
+          "quantity": 2,
+          "unitPrice": 35000,
+          "unit": "szt",
+          "lineTotal": 70000,
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "so-004",
+      "orderNumber": "SO-2025-004",
+      "customerName": "Indywidualny",
+      "customerContact": "Tomasz Zieliński",
+      "customerEmail": "tomasz.zielinski@example.com",
+      "deliveryAddress": "ul. Słoneczna 5, 80-001 Gdańsk",
+      "orderDate": "2025-03-05",
+      "requestedDeliveryDate": "2025-05-30",
+      "creationDate": "2025-03-05T15:45:00Z",
+      "lastModified": "2025-03-05T15:45:00Z",
+      "status": "confirmed",
+      "priority": "normal",
+      "paymentTerms": "Zaliczka 50%, reszta przed odbiorem",
+      "paymentStatus": "partial",
+      "notes": "Klient wskazał preferowany kolor: granatowy.",
+      "totalValue": 135000,
+      "items": [
+        {
+          "id": "item-006",
+          "productId": "prod-classic180",
+          "productName": "Classic 180",
+          "quantity": 1,
+          "unitPrice": 120000,
+          "unit": "szt",
+          "lineTotal": 120000,
+          "status": "confirmed"
+        },
+        {
+          "id": "item-007",
+          "productId": "prod-tapicerka-premium",
+          "productName": "Tapicerka Premium",
+          "quantity": 1,
+          "unitPrice": 15000,
+          "unit": "szt",
+          "lineTotal": 15000,
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "so-005",
+      "orderNumber": "SO-2025-005",
+      "customerName": "Szkoła Żeglarska WindSurf",
+      "customerContact": "Marek Adamski",
+      "customerEmail": "m.adamski@windsurf.edu.pl",
+      "deliveryAddress": "ul. Nadmorska 42, 84-120 Władysławowo",
+      "orderDate": "2025-03-10",
+      "requestedDeliveryDate": "2025-06-15",
+      "creationDate": "2025-03-10T09:30:00Z",
+      "lastModified": "2025-03-10T09:30:00Z",
+      "status": "pending",
+      "priority": "critical",
+      "paymentTerms": "Dotacja unijna, płatność po dostawie",
+      "paymentStatus": "pending",
+      "notes": "Pilne zamówienie na sezon letni, konieczne jest dotrzymanie terminu dostawy.",
+      "totalValue": 420000,
+      "items": [
+        {
+          "id": "item-008",
+          "productId": "prod-sport210",
+          "productName": "Sport 210",
+          "quantity": 2,
+          "unitPrice": 160000,
+          "unit": "szt",
+          "lineTotal": 320000,
+          "status": "pending"
+        },
+        {
+          "id": "item-009",
+          "productId": "prod-training-package",
+          "productName": "Pakiet szkoleniowy",
+          "quantity": 2,
+          "unitPrice": 50000,
+          "unit": "szt",
+          "lineTotal": 100000,
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}
