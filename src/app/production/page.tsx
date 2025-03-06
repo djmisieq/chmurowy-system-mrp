@@ -1,176 +1,247 @@
-import MainLayout from '../../components/layout/MainLayout';
+"use client";
 
-export default function ProductionPage() {
-  // Przykładowe dane
-  const productionPlans = [
-    { id: 'PROD-2025-001', modelName: 'Classic 180', quantity: 2, startDate: '2025-03-05', endDate: '2025-03-15', status: 'in-progress', completionRate: 35 },
-    { id: 'PROD-2025-002', modelName: 'Sport 210', quantity: 1, startDate: '2025-03-18', endDate: '2025-03-28', status: 'scheduled', completionRate: 0 },
-    { id: 'PROD-2025-003', modelName: 'Luxury 250', quantity: 1, startDate: '2025-04-01', endDate: '2025-04-18', status: 'scheduled', completionRate: 0 },
-    { id: 'PROD-2025-004', modelName: 'Fishing Pro 190', quantity: 3, startDate: '2025-04-20', endDate: '2025-05-10', status: 'pending', completionRate: 0 },
-    { id: 'PROD-2025-005', modelName: 'Classic 180', quantity: 1, startDate: '2025-05-15', endDate: '2025-05-25', status: 'pending', completionRate: 0 },
-  ];
+import React from 'react';
+import { 
+  Factory, 
+  Clock, 
+  BarChart2, 
+  Settings, 
+  Calendar,
+  Truck
+} from 'lucide-react';
+import MainLayout from '../../components/layout/MainLayout';
+import NavCard from '../../components/orders/NavCard';
+import { mockProductionOrders, productionStatus } from '../../components/orders/mockProductionOrders';
+
+const ProductionPage = () => {
+  // Formatowanie wartości do wyświetlenia
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('pl-PL', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(date);
+  };
 
   return (
     <MainLayout>
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900">Planowanie produkcji</h2>
-        <p className="mt-1 text-sm text-gray-500">Zarządzaj planami produkcji i harmonogramami</p>
+        <h2 className="text-2xl font-semibold text-gray-900">Produkcja</h2>
+        <p className="mt-1 text-sm text-gray-500">Zarządzanie zleceniami produkcyjnymi</p>
       </div>
       
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <div className="px-4 py-5 sm:px-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-          <div className="relative w-full sm:w-64">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-              </svg>
+      {/* Karty statystyk */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-6">
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Factory className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">W trakcie produkcji</dt>
+                  <dd className="flex items-baseline">
+                    <div className="text-2xl font-semibold text-gray-900">{productionStatus.inProgress}</div>
+                  </dd>
+                </dl>
+              </div>
             </div>
-            <input
-              type="text"
-              name="search"
-              id="search"
-              className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
-              placeholder="Wyszukaj plany produkcji"
-            />
-          </div>
-          <div className="flex space-x-2">
-            <button
-              type="button"
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="-ml-0.5 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-              Filtruj
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="-ml-0.5 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Nowy plan
-            </button>
           </div>
         </div>
-
+        
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Calendar className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Zaplanowane</dt>
+                  <dd className="flex items-baseline">
+                    <div className="text-2xl font-semibold text-gray-900">{productionStatus.planned}</div>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Clock className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Efektywność produkcji</dt>
+                  <dd className="flex items-baseline">
+                    <div className="text-2xl font-semibold text-gray-900">
+                      {Math.round((productionStatus.totalActualHours / productionStatus.totalEstimatedHours) * 100)}%
+                    </div>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Truck className="h-6 w-6 text-yellow-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Oczekujące na materiały</dt>
+                  <dd className="flex items-baseline">
+                    <div className="text-2xl font-semibold text-gray-900">{productionStatus.onHold}</div>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Kafelki nawigacyjne */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        <NavCard 
+          title="Plan produkcji" 
+          description="Planowanie i zarządzanie zleceniami produkcyjnymi"
+          icon={<Calendar size={24} />}
+          href="/production/planning" 
+        />
+        <NavCard 
+          title="Harmonogram" 
+          description="Harmonogramowanie zasobów i zleceń"
+          icon={<Clock size={24} />}
+          href="/production/scheduling" 
+        />
+        <NavCard 
+          title="Realizacja produkcji" 
+          description="Bieżąca kontrola i raportowanie produkcji"
+          icon={<Factory size={24} />}
+          href="/production/execution" 
+        />
+        <NavCard 
+          title="Raporty produkcyjne" 
+          description="Analiza wydajności i efektywności produkcji"
+          icon={<BarChart2 size={24} />}
+          href="/production/reports" 
+        />
+      </div>
+      
+      {/* Lista aktywnych zleceń produkcyjnych */}
+      <div className="bg-white shadow rounded-lg overflow-hidden mb-8">
+        <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+          <h3 className="text-lg leading-6 font-medium text-gray-900">Aktywne zlecenia produkcyjne</h3>
+          <p className="mt-1 text-sm text-gray-500">Zlecenia w trakcie realizacji i planowania</p>
+        </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Numer
+                  Nr zlecenia
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Model
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ilość
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Harmonogram
+                  Zamówienie klienta
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Postęp
+                  Przypisane do
                 </th>
-                <th scope="col" className="relative px-6 py-3">
-                  <span className="sr-only">Akcje</span>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Data rozpoczęcia
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Priorytet
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {productionPlans.map((plan) => (
-                <tr key={plan.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {plan.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {plan.modelName}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {plan.quantity}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {plan.startDate} - {plan.endDate}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        plan.status === 'in-progress'
-                          ? 'bg-blue-100 text-blue-800'
-                          : plan.status === 'scheduled'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
-                      {plan.status === 'in-progress'
-                        ? 'W trakcie'
-                        : plan.status === 'scheduled'
-                        ? 'Zaplanowane'
-                        : 'Oczekujące'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div 
-                        className="bg-primary-600 h-2.5 rounded-full" 
-                        style={{ width: `${plan.completionRate}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-xs text-gray-500 mt-1">{plan.completionRate}%</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <a href="#" className="text-primary-600 hover:text-primary-900 mr-4">Edytuj</a>
-                    <a href="#" className="text-primary-600 hover:text-primary-900">Szczegóły</a>
+              {mockProductionOrders
+                .filter(order => order.status === 'in_progress' || order.status === 'planned')
+                .map((order) => (
+                  <tr key={order.id} className="hover:bg-gray-50 cursor-pointer" 
+                      onClick={() => window.location.href = `/production/${order.id}`}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                      {order.orderNumber}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <a href={`/orders/sales/${order.relatedCustomerOrderId}`} 
+                         className="text-blue-600 hover:text-blue-900"
+                         onClick={(e) => e.stopPropagation()}>
+                        {order.relatedCustomerOrderNumber}
+                      </a>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        ${order.status === 'in_progress' ? 'bg-green-100 text-green-800' : 
+                          order.status === 'planned' ? 'bg-blue-100 text-blue-800' : 
+                          'bg-gray-100 text-gray-800'}`}>
+                        {order.status === 'in_progress' ? 'W produkcji' : 
+                         order.status === 'planned' ? 'Zaplanowane' : 
+                         order.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {order.assignedTo || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(order.startDate)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        ${order.priority === 'high' ? 'bg-red-100 text-red-800' : 
+                          order.priority === 'urgent' ? 'bg-red-100 text-red-800' : 
+                          'bg-blue-100 text-blue-800'}`}>
+                        {order.priority}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              {mockProductionOrders.filter(order => order.status === 'in_progress' || order.status === 'planned').length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                    Brak aktywnych zleceń produkcyjnych.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
-        
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-          <div className="flex-1 flex justify-between sm:hidden">
-            <a href="#" className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-              Poprzednie
-            </a>
-            <a href="#" className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-              Następne
-            </a>
-          </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Pokazuje <span className="font-medium">1</span> do <span className="font-medium">5</span> z{' '}
-                <span className="font-medium">5</span> planów
-              </p>
-            </div>
-            <div>
-              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                <a href="#" className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                  <span className="sr-only">Poprzednie</span>
-                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </a>
-                <a href="#" aria-current="page" className="z-10 bg-primary-50 border-primary-500 text-primary-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                  1
-                </a>
-                <a href="#" className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                  <span className="sr-only">Następne</span>
-                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                  </svg>
-                </a>
-              </nav>
+        {mockProductionOrders.filter(order => order.status === 'in_progress' || order.status === 'planned').length > 0 && (
+          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 sm:px-6">
+            <div className="text-sm">
+              <a href="/production/planning" className="font-medium text-blue-600 hover:text-blue-500">
+                Zobacz wszystkie zlecenia produkcyjne <span aria-hidden="true">→</span>
+              </a>
             </div>
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* Informacja o implementacji */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-700">
+        <p className="flex items-center">
+          <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clipRule="evenodd" />
+          </svg>
+          <span className="font-medium">Uwaga:</span>
+          <span className="ml-1">Podstrony modułu produkcji są w trakcie implementacji. Ta strona pokazuje powiązanie z modułem zamówień.</span>
+        </p>
       </div>
     </MainLayout>
   );
-}
+};
+
+export default ProductionPage;
