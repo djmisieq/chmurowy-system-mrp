@@ -18,6 +18,12 @@
       { "id": 2, "product": "Sport 210", "quantity": 1, "status": "Scheduled", "startDate": "2025-03-18", "endDate": "2025-03-28" },
       { "id": 3, "product": "Luxury 250", "quantity": 1, "status": "Scheduled", "startDate": "2025-04-01", "endDate": "2025-04-18" },
       { "id": 4, "product": "Fishing Pro 190", "quantity": 3, "status": "Pending", "startDate": "2025-04-20", "endDate": "2025-05-10" }
+    ],
+    "alerts": [
+      { "id": 1, "type": "inventory", "message": "Niski stan magazynowy: Zbiornik paliwa 100L", "timestamp": "2025-03-06T08:30:00Z", "priority": "high" },
+      { "id": 2, "type": "order", "message": "Opóźnione zamówienie #ZAM-2025-021", "timestamp": "2025-03-05T14:15:00Z", "priority": "medium" },
+      { "id": 3, "type": "production", "message": "Rozpoczęta produkcja: Classic 180 (2 szt.)", "timestamp": "2025-03-05T09:00:00Z", "priority": "low" },
+      { "id": 4, "type": "inventory", "message": "Niski stan magazynowy: Kadłub 18ft Classic", "timestamp": "2025-03-06T07:45:00Z", "priority": "medium" }
     ]
   }
 }
