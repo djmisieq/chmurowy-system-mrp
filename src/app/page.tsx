@@ -5,9 +5,11 @@ import MainLayout from '../components/layout/MainLayout';
 import axios from 'axios';
 import StatCard from '../components/dashboard/StatCard';
 import StatusTable from '../components/dashboard/StatusTable';
+import ChartCard from '../components/dashboard/ChartCard';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
-import { AlertTriangle, Package, ShoppingCart, ClipboardList, TrendingUp } from 'lucide-react';
+import { AlertTriangle, Package, ShoppingCart, ClipboardList, TrendingUp, BarChart } from 'lucide-react';
+import Button from '../components/ui/Button';
 
 export default function Home() {
   // Dashboard data states
@@ -17,6 +19,25 @@ export default function Home() {
   const [inventoryItems, setInventoryItems] = useState([]);
   const [scheduleItems, setScheduleItems] = useState([]);
   const [alertItems, setAlertItems] = useState([]);
+
+  // Sample chart data for demonstration
+  const [inventoryChartData, setInventoryChartData] = useState([
+    { name: 'Styczeń', value: 350 },
+    { name: 'Luty', value: 320 },
+    { name: 'Marzec', value: 356 },
+    { name: 'Kwiecień', value: 390 },
+    { name: 'Maj', value: 410 },
+    { name: 'Czerwiec', value: 405 },
+  ]);
+
+  const [productionChartData, setProductionChartData] = useState([
+    { name: 'Tydzień 1', planowane: 4, zrealizowane: 3 },
+    { name: 'Tydzień 2', planowane: 5, zrealizowane: 5 },
+    { name: 'Tydzień 3', planowane: 6, zrealizowane: 5 },
+    { name: 'Tydzień 4', planowane: 7, zrealizowane: 6 },
+    { name: 'Tydzień 5', planowane: 5, zrealizowane: 5 },
+    { name: 'Tydzień 6', planowane: 4, zrealizowane: 4 },
+  ]);
 
   // Fetch data from mock API
   useEffect(() => {
@@ -126,7 +147,7 @@ export default function Home() {
         />
       </div>
 
-      {/* Alerts & Notifications (New) */}
+      {/* Alerts & Notifications */}
       {alertItems.length > 0 && (
         <div className="mb-6">
           <Card 
@@ -168,6 +189,35 @@ export default function Home() {
           </Card>
         </div>
       )}
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 mb-6">
+        <ChartCard
+          title="Stan magazynowy w czasie"
+          subtitle="Liczba produktów w ostatnich 6 miesiącach"
+          chartType="line"
+          data={inventoryChartData}
+          dataKeys={['value']}
+          action={
+            <Button href="/inventory/reports" size="sm" variant="outline">
+              Pełny raport
+            </Button>
+          }
+        />
+        <ChartCard
+          title="Realizacja produkcji"
+          subtitle="Planowane vs. zrealizowane zlecenia produkcyjne"
+          chartType="bar"
+          data={productionChartData}
+          dataKeys={['planowane', 'zrealizowane']}
+          colors={['#0ea5e9', '#10b981']}
+          action={
+            <Button href="/production/reports" size="sm" variant="outline">
+              Pełny raport
+            </Button>
+          }
+        />
+      </div>
 
       {/* Info Panels */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
