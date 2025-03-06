@@ -3,16 +3,22 @@
 import { useEffect, useState } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import axios from 'axios';
+import StatCard from '../components/dashboard/StatCard';
+import StatusTable from '../components/dashboard/StatusTable';
+import Card from '../components/ui/Card';
+import Badge from '../components/ui/Badge';
+import { AlertTriangle, Package, ShoppingCart, ClipboardList, TrendingUp } from 'lucide-react';
 
 export default function Home() {
-  // Stany dla danych dashboardu
+  // Dashboard data states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [stats, setStats] = useState([]);
   const [inventoryItems, setInventoryItems] = useState([]);
   const [scheduleItems, setScheduleItems] = useState([]);
+  const [alertItems, setAlertItems] = useState([]);
 
-  // Pobieranie danych z mock API
+  // Fetch data from mock API
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -23,11 +29,12 @@ export default function Home() {
         setStats(data.stats);
         setInventoryItems(data.inventorySummary);
         setScheduleItems(data.productionSchedule);
+        setAlertItems(data.alerts || []);
         setError(false);
       } catch (err) {
         console.error('Błąd pobierania danych dashboardu:', err);
         setError(true);
-        // W przypadku błędu API używamy danych zastępczych
+        // Fallback data
         setStats([
           { name: 'Otwarte zamówienia', value: '15', change: '+2', changeType: 'increase' },
           { name: 'Produkty na magazynie', value: '356', change: '-12', changeType: 'decrease' },
@@ -45,6 +52,10 @@ export default function Home() {
           { id: 2, product: 'Sport 210', quantity: 1, status: 'Scheduled', startDate: '2025-03-18', endDate: '2025-03-28' },
           { id: 3, product: 'Luxury 250', quantity: 1, status: 'Scheduled', startDate: '2025-04-01', endDate: '2025-04-18' },
         ]);
+        setAlertItems([
+          { id: 1, type: 'inventory', message: 'Niski stan magazynowy: Zbiornik paliwa 100L', timestamp: '2025-03-06T08:30:00Z', priority: 'high' },
+          { id: 2, type: 'order', message: 'Opóźnione zamówienie #ZAM-2025-021', timestamp: '2025-03-05T14:15:00Z', priority: 'medium' }
+        ]);
       } finally {
         setLoading(false);
       }
@@ -53,12 +64,12 @@ export default function Home() {
     fetchDashboardData();
   }, []);
 
-  // Komponent stanu ładowania
+  // Loading component
   if (loading) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
           <p className="ml-3 text-lg text-gray-600">Ładowanie danych...</p>
         </div>
       </MainLayout>
@@ -77,203 +88,125 @@ export default function Home() {
         )}
       </div>
 
-      {/* Karty statystyk */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-        {stats.map((stat) => (
-          <div key={stat.name} className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="h-10 w-10 rounded-md bg-primary-100 flex items-center justify-center">
-                    <span className="text-primary-600 text-xl font-semibold">{stat.name.charAt(0)}</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dt className="text-sm font-medium text-gray-500 truncate">{stat.name}</dt>
-                  <dd className="flex items-baseline">
-                    <div className="text-2xl font-semibold text-gray-900">{stat.value}</div>
-                    <div
-                      className={`ml-2 flex items-baseline text-sm font-semibold ${
-                        stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
-                      }`}
-                    >
-                      {stat.changeType === 'increase' ? (
-                        <svg className="self-center flex-shrink-0 h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path
-                            fillRule="evenodd"
-                            d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      ) : (
-                        <svg className="self-center flex-shrink-0 h-4 w-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path
-                            fillRule="evenodd"
-                            d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      )}
-                      <span className="ml-1">{stat.change}</span>
-                    </div>
-                  </dd>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
+        <StatCard 
+          title="Otwarte zamówienia"
+          value={stats[0]?.value || "0"}
+          change={stats[0]?.change}
+          changeType={stats[0]?.changeType}
+          icon={<ShoppingCart size={20} />}
+        />
+        <StatCard 
+          title="Produkty na magazynie"
+          value={stats[1]?.value || "0"}
+          change={stats[1]?.change}
+          changeType={stats[1]?.changeType}
+          icon={<Package size={20} />}
+          iconBgColor="bg-accent-100"
+          iconTextColor="text-accent-600"
+        />
+        <StatCard 
+          title="Produkty do zamówienia"
+          value={stats[2]?.value || "0"}
+          change={stats[2]?.change}
+          changeType={stats[2]?.changeType}
+          icon={<AlertTriangle size={20} />}
+          iconBgColor="bg-warning-50"
+          iconTextColor="text-warning-500"
+        />
+        <StatCard 
+          title="Planowane produkcje"
+          value={stats[3]?.value || "0"}
+          change={stats[3]?.change}
+          changeType={stats[3]?.changeType}
+          icon={<ClipboardList size={20} />}
+          iconBgColor="bg-success-50"
+          iconTextColor="text-success-500"
+        />
       </div>
 
-      {/* Panele informacyjne */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        {/* Stan magazynu */}
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Stan magazynu</h3>
-            <a
-              href="/inventory"
-              className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              Szczegóły
-            </a>
-          </div>
-          <div className="border-t border-gray-200">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Nazwa
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Stan
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {inventoryItems.map((item) => (
-                    <tr key={item.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {item.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.stock} / {item.threshold}+
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            item.status === 'good'
-                              ? 'bg-green-100 text-green-800'
-                              : item.status === 'warning'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {item.status === 'good'
-                            ? 'Dobry'
-                            : item.status === 'warning'
-                            ? 'Niski stan'
-                            : 'Krytyczny'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {/* Alerts & Notifications (New) */}
+      {alertItems.length > 0 && (
+        <div className="mb-6">
+          <Card 
+            title="Alerty i powiadomienia"
+            subtitle="Ostatnie zdarzenia wymagające uwagi"
+          >
+            <div className="space-y-3">
+              {alertItems.map((alert) => (
+                <div 
+                  key={alert.id} 
+                  className={`flex p-3 rounded-lg border-l-4 ${
+                    alert.priority === 'high' 
+                      ? 'bg-red-50 border-red-500' 
+                      : alert.priority === 'medium'
+                      ? 'bg-yellow-50 border-yellow-500'
+                      : 'bg-blue-50 border-blue-500'
+                  }`}
+                >
+                  <div className="flex-shrink-0 mr-3">
+                    <AlertTriangle 
+                      size={20} 
+                      className={alert.priority === 'high' 
+                        ? 'text-red-500' 
+                        : alert.priority === 'medium'
+                        ? 'text-yellow-500'
+                        : 'text-blue-500'
+                      } 
+                    />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{alert.message}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(alert.timestamp).toLocaleString('pl-PL')}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          </Card>
         </div>
+      )}
 
-        {/* Harmonogram produkcji */}
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Harmonogram produkcji</h3>
-            <a
-              href="/production"
-              className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              Szczegóły
-            </a>
-          </div>
-          <div className="border-t border-gray-200">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Produkt
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Ilość
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Status
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Data
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {scheduleItems.map((item) => (
-                    <tr key={item.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {item.product}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.quantity}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            item.status === 'In Progress'
-                              ? 'bg-blue-100 text-blue-800'
-                              : item.status === 'Scheduled'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {item.status === 'In Progress'
-                            ? 'W trakcie'
-                            : item.status === 'Scheduled'
-                            ? 'Zaplanowano'
-                            : 'Oczekuje'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.startDate} - {item.endDate}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+      {/* Info Panels */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        {/* Inventory Status */}
+        <StatusTable
+          title="Stan magazynu"
+          detailsUrl="/inventory"
+          columns={[
+            { key: 'name', header: 'Nazwa' },
+            { key: 'stock', header: 'Stan', render: (stock, item) => `${stock} / ${item.threshold}+` },
+            { 
+              key: 'status', 
+              header: 'Status', 
+              render: (status) => <StatusTable.StatusBadge status={status} /> 
+            }
+          ]}
+          data={inventoryItems}
+        />
+
+        {/* Production Schedule */}
+        <StatusTable
+          title="Harmonogram produkcji"
+          detailsUrl="/production"
+          columns={[
+            { key: 'product', header: 'Produkt' },
+            { key: 'quantity', header: 'Ilość' },
+            { 
+              key: 'status', 
+              header: 'Status', 
+              render: (status) => <StatusTable.StatusBadge status={status} /> 
+            },
+            { 
+              key: 'startDate', 
+              header: 'Data', 
+              render: (startDate, item) => `${startDate} - ${item.endDate}` 
+            }
+          ]}
+          data={scheduleItems}
+        />
       </div>
     </MainLayout>
   );
