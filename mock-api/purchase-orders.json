@@ -1,0 +1,176 @@
+{
+  "purchaseOrders": [
+    {
+      "id": "po-001",
+      "orderNumber": "PO-2025-001",
+      "supplierName": "Marine Parts Ltd.",
+      "supplierContact": "Robert Smith",
+      "supplierEmail": "r.smith@marineparts.com",
+      "orderDate": "2025-02-15",
+      "expectedDeliveryDate": "2025-03-15",
+      "creationDate": "2025-02-15T09:20:00Z",
+      "lastModified": "2025-02-15T09:20:00Z",
+      "status": "received",
+      "deliveryTerms": "Ex Works, płatność 14 dni",
+      "paymentTerms": "Przelew 14 dni",
+      "notes": "Standardowe zamówienie miesięczne elementów kadłubów.",
+      "totalValue": 75000,
+      "items": [
+        {
+          "id": "poitem-001",
+          "productId": "mat-hull-fiberglass",
+          "productName": "Mata z włókna szklanego",
+          "quantity": 500,
+          "unitPrice": 80,
+          "unit": "m²",
+          "lineTotal": 40000,
+          "status": "received"
+        },
+        {
+          "id": "poitem-002",
+          "productId": "mat-hull-resin",
+          "productName": "Żywica epoksydowa",
+          "quantity": 200,
+          "unitPrice": 175,
+          "unit": "litr",
+          "lineTotal": 35000,
+          "status": "received"
+        }
+      ]
+    },
+    {
+      "id": "po-002",
+      "orderNumber": "PO-2025-002",
+      "supplierName": "MotorTech GmbH",
+      "supplierContact": "Hans Mueller",
+      "supplierEmail": "h.mueller@motortech.de",
+      "orderDate": "2025-02-20",
+      "expectedDeliveryDate": "2025-03-25",
+      "creationDate": "2025-02-20T11:45:00Z",
+      "lastModified": "2025-02-28T14:30:00Z",
+      "status": "confirmed",
+      "deliveryTerms": "DAP Gdańsk, ubezpieczenie transportu po stronie dostawcy",
+      "paymentTerms": "Zaliczka 30%, reszta 30 dni od dostawy",
+      "notes": "Zamówienie silników na sezon wiosenny. Konieczne potwierdzenie dokładnej daty dostawy.",
+      "totalValue": 180000,
+      "items": [
+        {
+          "id": "poitem-003",
+          "productId": "eng-outboard-40hp",
+          "productName": "Silnik zaburtowy 40KM",
+          "quantity": 5,
+          "unitPrice": 20000,
+          "unit": "szt",
+          "lineTotal": 100000,
+          "status": "confirmed"
+        },
+        {
+          "id": "poitem-004",
+          "productId": "eng-outboard-60hp",
+          "productName": "Silnik zaburtowy 60KM",
+          "quantity": 2,
+          "unitPrice": 32000,
+          "unit": "szt",
+          "lineTotal": 64000,
+          "status": "confirmed"
+        },
+        {
+          "id": "poitem-005",
+          "productId": "eng-spare-parts",
+          "productName": "Zestaw części zamiennych",
+          "quantity": 4,
+          "unitPrice": 4000,
+          "unit": "zestaw",
+          "lineTotal": 16000,
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "id": "po-003",
+      "orderNumber": "PO-2025-003",
+      "supplierName": "BoatInteriors S.A.",
+      "supplierContact": "Maria Gonzalez",
+      "supplierEmail": "m.gonzalez@boatinteriors.es",
+      "orderDate": "2025-03-01",
+      "expectedDeliveryDate": "2025-04-01",
+      "creationDate": "2025-03-01T16:10:00Z",
+      "lastModified": "2025-03-01T16:10:00Z",
+      "status": "sent",
+      "deliveryTerms": "CIF Gdańsk",
+      "paymentTerms": "Przelew 30 dni od dostawy",
+      "notes": "Zamówienie materiałów tapicerskich w nowej kolorystyce na sezon 2025.",
+      "totalValue": 45000,
+      "items": [
+        {
+          "id": "poitem-006",
+          "productId": "int-upholstery-marine",
+          "productName": "Materiał tapicerski Marine",
+          "quantity": 200,
+          "unitPrice": 120,
+          "unit": "m²",
+          "lineTotal": 24000,
+          "status": "sent"
+        },
+        {
+          "id": "poitem-007",
+          "productId": "int-foam-high-density",
+          "productName": "Pianka wysokiej gęstości",
+          "quantity": 100,
+          "unitPrice": 80,
+          "unit": "m²",
+          "lineTotal": 8000,
+          "status": "sent"
+        },
+        {
+          "id": "poitem-008",
+          "productId": "int-leather-premium",
+          "productName": "Skóra Premium",
+          "quantity": 50,
+          "unitPrice": 260,
+          "unit": "m²",
+          "lineTotal": 13000,
+          "status": "sent"
+        }
+      ]
+    },
+    {
+      "id": "po-004",
+      "orderNumber": "PO-2025-004",
+      "supplierName": "NavSystems Ltd.",
+      "supplierContact": "John Davis",
+      "supplierEmail": "j.davis@navsystems.co.uk",
+      "orderDate": "2025-03-05",
+      "expectedDeliveryDate": "2025-03-30",
+      "creationDate": "2025-03-05T10:25:00Z",
+      "lastModified": "2025-03-05T10:25:00Z",
+      "status": "draft",
+      "deliveryTerms": "DDP Gdańsk",
+      "paymentTerms": "Płatność przy zamówieniu",
+      "notes": "Wstępne zamówienie systemów nawigacyjnych, czekamy na potwierdzenie specyfikacji technicznej.",
+      "totalValue": 90000,
+      "items": [
+        {
+          "id": "poitem-009",
+          "productId": "nav-gps-premium",
+          "productName": "System GPS Premium",
+          "quantity": 5,
+          "unitPrice": 12000,
+          "unit": "zestaw",
+          "lineTotal": 60000,
+          "status": "draft"
+        },
+        {
+          "id": "poitem-010",
+          "productId": "nav-sonar",
+          "productName": "Sonar głębokościowy",
+          "quantity": 10,
+          "unitPrice": 3000,
+          "unit": "szt",
+          "lineTotal": 30000,
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}
