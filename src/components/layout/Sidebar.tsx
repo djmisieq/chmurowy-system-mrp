@@ -17,7 +17,13 @@ import {
   ClipboardList,
   Repeat,
   Tag,
-  Database
+  Database,
+  ShoppingBag,
+  TruckDelivery,
+  Calendar,
+  Factory,
+  History,
+  PieChart
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -35,12 +41,26 @@ interface MenuItem {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const pathname = usePathname();
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
-    'Magazyn': true // Domyślnie rozwinięty moduł magazynu
+    'Magazyn': true, // Domyślnie rozwinięty moduł magazynu
+    'Zamówienia': true // Domyślnie rozwinięty moduł zamówień
   });
   
   const menuItems: MenuItem[] = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/' },
-    { name: 'Zamówienia', icon: ShoppingCart, href: '/orders' },
+    { 
+      name: 'Zamówienia', 
+      icon: ShoppingCart, 
+      href: '/orders',
+      children: [
+        { name: 'Przegląd', icon: LayoutDashboard, href: '/orders' },
+        { name: 'Zamówienia klientów', icon: ShoppingBag, href: '/orders/sales' },
+        { name: 'Zamówienia do dostawców', icon: TruckDelivery, href: '/orders/purchase' },
+        { name: 'Planowanie zakupów', icon: Calendar, href: '/orders/planning' },
+        { name: 'Zlecenia produkcyjne', icon: Factory, href: '/orders/production' },
+        { name: 'Historia zamówień', icon: History, href: '/orders/history' },
+        { name: 'Raporty zamówień', icon: PieChart, href: '/orders/reports' },
+      ]
+    },
     { 
       name: 'Magazyn', 
       icon: Package, 
