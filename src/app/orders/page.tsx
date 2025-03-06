@@ -3,7 +3,7 @@
 import React from 'react';
 import MainLayout from '../../components/layout/MainLayout';
 import Link from 'next/link';
-import { ShoppingBag, TruckDelivery, Calendar, Factory, History, PieChart } from 'lucide-react';
+import { ShoppingBag, Truck, CalendarDays, Factory, Clock, PieChart } from 'lucide-react';
 
 const OrdersPage = () => {
   const orderModules = [
@@ -17,7 +17,7 @@ const OrdersPage = () => {
     },
     { 
       name: 'Zamówienia do dostawców', 
-      icon: TruckDelivery, 
+      icon: Truck, 
       href: '/orders/purchase',
       description: 'Zarządzanie zamówieniami do dostawców',
       bgColor: 'bg-green-50',
@@ -25,7 +25,7 @@ const OrdersPage = () => {
     },
     { 
       name: 'Planowanie zakupów', 
-      icon: Calendar, 
+      icon: CalendarDays, 
       href: '/orders/planning',
       description: 'Planowanie zakupów na podstawie zapotrzebowania',
       bgColor: 'bg-purple-50',
@@ -41,7 +41,7 @@ const OrdersPage = () => {
     },
     { 
       name: 'Historia zamówień', 
-      icon: History, 
+      icon: Clock, 
       href: '/orders/history',
       description: 'Archiwum i historia zamówień',
       bgColor: 'bg-gray-50',
