@@ -6,12 +6,21 @@ import OrderStatusBadge from '../shared/OrderStatusBadge';
 import PriorityBadge from '../shared/PriorityBadge';
 import Link from 'next/link';
 import { Eye, Edit, FileText } from 'lucide-react';
+import { getSalesOrders } from '../../../services/ordersService';
 
 interface SalesOrdersListProps {
   initialOrders?: SalesOrder[];
+  filter?: {
+    status?: string[];
+    dateFrom?: string;
+    dateTo?: string;
+    customer?: string;
+    minValue?: number;
+    maxValue?: number;
+  };
 }
 
-const SalesOrdersList: React.FC<SalesOrdersListProps> = ({ initialOrders = [] }) => {
+const SalesOrdersList: React.FC<SalesOrdersListProps> = ({ initialOrders = [], filter }) => {
   const [orders, setOrders] = useState<SalesOrder[]>(initialOrders);
   const [loading, setLoading] = useState<boolean>(initialOrders.length === 0);
   const [error, setError] = useState<string | null>(null);
@@ -20,35 +29,17 @@ const SalesOrdersList: React.FC<SalesOrdersListProps> = ({ initialOrders = [] })
     if (initialOrders.length === 0) {
       fetchOrders();
     }
-  }, [initialOrders]);
+  }, [initialOrders, filter]);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      // W przyszłości zastąpimy to rzeczywistym API
-      const response = await fetch('/api/sales-orders');
-      const data = await response.json();
-      
-      if (data && data.salesOrders) {
-        setOrders(data.salesOrders);
-      } else {
-        setError('Brak danych lub nieprawidłowy format danych');
-      }
+      const data = await getSalesOrders(filter);
+      setOrders(data);
+      setError(null);
     } catch (err) {
       console.error('Błąd podczas pobierania zamówień:', err);
       setError('Wystąpił błąd podczas pobierania zamówień. Spróbuj ponownie później.');
-      
-      // Tymczasowo - gdy API nie jest dostępne, załaduj dane mockowane
-      try {
-        const mockResponse = await fetch('/mock-api/sales-orders.json');
-        const mockData = await mockResponse.json();
-        if (mockData && mockData.salesOrders) {
-          setOrders(mockData.salesOrders);
-          setError(null);
-        }
-      } catch (mockErr) {
-        console.error('Nie można załadować mockowanych danych:', mockErr);
-      }
     } finally {
       setLoading(false);
     }
@@ -162,6 +153,25 @@ const SalesOrdersList: React.FC<SalesOrdersListProps> = ({ initialOrders = [] })
           ))}
         </tbody>
       </table>
+      <div className="mt-4 flex items-center justify-between">
+        <div className="text-sm text-gray-500">
+          Wyświetlanie {orders.length} z {orders.length} zamówień
+        </div>
+        <div className="flex space-x-2">
+          <button 
+            className="px-3 py-1 border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            disabled={true}
+          >
+            Poprzednia
+          </button>
+          <button 
+            className="px-3 py-1 border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            disabled={true}
+          >
+            Następna
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
