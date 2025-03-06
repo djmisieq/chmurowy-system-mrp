@@ -19,10 +19,10 @@ import {
   Tag,
   Database,
   ShoppingBag,
-  TruckDelivery,
-  Calendar,
+  Truck,
+  CalendarDays,
   Factory,
-  History,
+  Clock,
   PieChart
 } from 'lucide-react';
 
@@ -54,10 +54,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       children: [
         { name: 'Przegląd', icon: LayoutDashboard, href: '/orders' },
         { name: 'Zamówienia klientów', icon: ShoppingBag, href: '/orders/sales' },
-        { name: 'Zamówienia do dostawców', icon: TruckDelivery, href: '/orders/purchase' },
-        { name: 'Planowanie zakupów', icon: Calendar, href: '/orders/planning' },
+        { name: 'Zamówienia do dostawców', icon: Truck, href: '/orders/purchase' },
+        { name: 'Planowanie zakupów', icon: CalendarDays, href: '/orders/planning' },
         { name: 'Zlecenia produkcyjne', icon: Factory, href: '/orders/production' },
-        { name: 'Historia zamówień', icon: History, href: '/orders/history' },
+        { name: 'Historia zamówień', icon: Clock, href: '/orders/history' },
         { name: 'Raporty zamówień', icon: PieChart, href: '/orders/reports' },
       ]
     },
