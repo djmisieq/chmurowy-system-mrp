@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -23,12 +23,14 @@ import {
   CalendarDays,
   Factory,
   Clock,
-  PieChart
+  PieChart,
+  X
 } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
   toggleSidebar: () => void;
+  isMobileView?: boolean;
 }
 
 interface MenuItem {
@@ -38,12 +40,19 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, isMobileView = false }) => {
   const pathname = usePathname();
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
-    'Magazyn': true, // Domyślnie rozwinięty moduł magazynu
-    'Zamówienia': true // Domyślnie rozwinięty moduł zamówień
+    'Magazyn': true, // Rozwinięty domyślnie
+    'Zamówienia': true // Rozwinięty domyślnie
   });
+  
+  // Reset expanded items when sidebar is closed (for desktop view)
+  useEffect(() => {
+    if (!isOpen && !isMobileView) {
+      setExpandedItems({});
+    }
+  }, [isOpen, isMobileView]);
   
   const menuItems: MenuItem[] = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/' },
@@ -95,24 +104,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
+  // Classes for sidebar positioning
+  const sidebarClasses = `
+    fixed top-0 bottom-0 bg-white shadow-lg
+    transition-all duration-300 z-50
+    ${isOpen ? (isMobileView ? 'left-0' : 'w-64 left-0') : (isMobileView ? '-left-full' : 'w-20 left-0')}
+    ${isMobileView ? 'w-[280px]' : ''}
+    overflow-y-auto overflow-x-hidden
+  `;
+
   return (
-    <div 
-      className={`
-        fixed left-0 top-0 bottom-0 bg-white shadow-md 
-        transition-all duration-300 z-50
-        ${isOpen ? 'w-64' : 'w-20'}
-        overflow-y-auto overflow-x-hidden
-      `}
-    >
+    <div className={sidebarClasses}>
       <div className="flex items-center justify-between p-4 border-b">
         {isOpen && (
-          <h2 className="text-xl font-bold text-gray-800">Chmurowy MRP</h2>
+          <h2 className="text-xl font-bold text-gray-800 md:block">Chmurowy MRP</h2>
         )}
         <button 
           onClick={toggleSidebar} 
-          className="ml-auto hover:bg-gray-100 p-2 rounded-full"
+          className="ml-auto p-2 rounded-full hover:bg-gray-100 text-gray-600"
+          aria-label={isOpen ? 'Zwiń menu' : 'Rozwiń menu'}
         >
-          {isOpen ? <ChevronsLeft /> : <ChevronsRight />}
+          {isMobileView ? 
+            (isOpen ? <X size={20} /> : <ChevronsRight size={20} />) : 
+            (isOpen ? <ChevronsLeft size={20} /> : <ChevronsRight size={20} />)
+          }
         </button>
       </div>
       
@@ -126,8 +141,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                     onClick={() => toggleExpand(item.name)}
                     className={`
                       w-full flex items-center p-3 
-                      ${isActive(item.href) ? 'bg-blue-50 text-blue-600' : 'text-gray-700'} 
-                      hover:bg-blue-50 hover:text-blue-600
+                      ${isActive(item.href) ? 'bg-primary-50 text-primary-600' : 'text-gray-700'} 
+                      hover:bg-primary-50 hover:text-primary-600
                       transition-colors
                     `}
                   >
@@ -151,11 +166,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                             href={child.href}
                             className={`
                               flex items-center p-2 my-1 rounded
-                              ${isChildActive(child.href) ? 'bg-blue-100 text-blue-700' : 'text-gray-700'} 
-                              hover:bg-blue-100 hover:text-blue-700
+                              ${isChildActive(child.href) ? 'bg-primary-100 text-primary-700' : 'text-gray-700'} 
+                              hover:bg-primary-100 hover:text-primary-700
                               transition-colors
                               text-sm
                             `}
+                            onClick={isMobileView ? toggleSidebar : undefined}
                           >
                             <child.icon size={16} className="mr-2" />
                             <span>{child.name}</span>
@@ -170,10 +186,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                   href={item.href}
                   className={`
                     flex items-center p-3 
-                    ${isActive(item.href) ? 'bg-blue-50 text-blue-600' : 'text-gray-700'} 
-                    hover:bg-blue-50 hover:text-blue-600
+                    ${isActive(item.href) ? 'bg-primary-50 text-primary-600' : 'text-gray-700'} 
+                    hover:bg-primary-50 hover:text-primary-600
                     transition-colors
                   `}
+                  onClick={isMobileView ? toggleSidebar : undefined}
                 >
                   <item.icon className={`mr-3 ${isOpen ? '' : 'mx-auto'}`} size={20} />
                   {isOpen && <span>{item.name}</span>}
