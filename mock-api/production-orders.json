@@ -1,0 +1,147 @@
+{
+  "productionOrders": [
+    {
+      "id": "po-001",
+      "orderNumber": "PROD-2025-001",
+      "relatedSalesOrderId": "so-001",
+      "name": "Classic 180 - Standard",
+      "description": "Produkcja łodzi Classic 180 w standardowej konfiguracji",
+      "startDate": "2025-02-25",
+      "endDate": "2025-04-10",
+      "status": "in_progress",
+      "priority": "normal",
+      "assignedTo": ["team-hull", "team-assembly"],
+      "completionRate": 45,
+      "items": [
+        {
+          "id": "pitem-001",
+          "productId": "prod-classic180",
+          "productName": "Classic 180",
+          "quantity": 1,
+          "completedQuantity": 0,
+          "startDate": "2025-02-25",
+          "endDate": "2025-04-10",
+          "status": "in_progress"
+        }
+      ]
+    },
+    {
+      "id": "po-002",
+      "orderNumber": "PROD-2025-002",
+      "relatedSalesOrderId": "so-002",
+      "name": "Sport 210 - Navigation Package",
+      "description": "Produkcja łodzi Sport 210 z pakietem nawigacyjnym Premium",
+      "startDate": "2025-03-01",
+      "endDate": "2025-05-05",
+      "status": "in_progress",
+      "priority": "high",
+      "assignedTo": ["team-hull", "team-assembly", "team-electronics"],
+      "completionRate": 30,
+      "items": [
+        {
+          "id": "pitem-002",
+          "productId": "prod-sport210",
+          "productName": "Sport 210",
+          "quantity": 1,
+          "completedQuantity": 0,
+          "startDate": "2025-03-01",
+          "endDate": "2025-05-01",
+          "status": "in_progress"
+        },
+        {
+          "id": "pitem-003",
+          "productId": "prod-navig-premium",
+          "productName": "Pakiet nawigacyjny Premium",
+          "quantity": 1,
+          "completedQuantity": 0,
+          "startDate": "2025-04-25",
+          "endDate": "2025-05-05",
+          "status": "not_started"
+        }
+      ]
+    },
+    {
+      "id": "po-003",
+      "orderNumber": "PROD-2025-003",
+      "name": "Classic 180 - Batch",
+      "description": "Produkcja seryjna 3 łodzi Classic 180 dla magazynu",
+      "startDate": "2025-03-15",
+      "endDate": "2025-05-30",
+      "status": "planned",
+      "priority": "normal",
+      "assignedTo": ["team-hull", "team-assembly"],
+      "completionRate": 0,
+      "items": [
+        {
+          "id": "pitem-004",
+          "productId": "prod-classic180",
+          "productName": "Classic 180",
+          "quantity": 3,
+          "completedQuantity": 0,
+          "startDate": "2025-03-15",
+          "endDate": "2025-05-30",
+          "status": "not_started"
+        }
+      ]
+    },
+    {
+      "id": "po-004",
+      "orderNumber": "PROD-2025-004",
+      "relatedSalesOrderId": "so-004",
+      "name": "Classic 180 - Custom",
+      "description": "Produkcja łodzi Classic 180 z niestandardową tapicerką Premium",
+      "startDate": "2025-03-20",
+      "endDate": "2025-05-25",
+      "status": "planned",
+      "priority": "normal",
+      "assignedTo": ["team-hull", "team-assembly", "team-upholstery"],
+      "completionRate": 0,
+      "items": [
+        {
+          "id": "pitem-005",
+          "productId": "prod-classic180",
+          "productName": "Classic 180",
+          "quantity": 1,
+          "completedQuantity": 0,
+          "startDate": "2025-03-20",
+          "endDate": "2025-05-20",
+          "status": "not_started"
+        },
+        {
+          "id": "pitem-006",
+          "productId": "prod-tapicerka-premium",
+          "productName": "Tapicerka Premium",
+          "quantity": 1,
+          "completedQuantity": 0,
+          "startDate": "2025-05-15",
+          "endDate": "2025-05-25",
+          "status": "not_started"
+        }
+      ]
+    },
+    {
+      "id": "po-005",
+      "orderNumber": "PROD-2025-005",
+      "name": "Fishing Pro 190 - Standard",
+      "description": "Produkcja łodzi Fishing Pro 190 w standardowej konfiguracji",
+      "startDate": "2025-02-10",
+      "endDate": "2025-04-05",
+      "status": "completed",
+      "priority": "normal",
+      "assignedTo": ["team-hull", "team-assembly"],
+      "completionRate": 100,
+      "items": [
+        {
+          "id": "pitem-007",
+          "productId": "prod-fishingpro190",
+          "productName": "Fishing Pro 190",
+          "quantity": 1,
+          "completedQuantity": 1,
+          "startDate": "2025-02-10",
+          "endDate": "2025-04-05",
+          "status": "completed"
+        }
+      ]
+    }
+  ]
+}
