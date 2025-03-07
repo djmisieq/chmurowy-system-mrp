@@ -25,9 +25,7 @@ import {
   Clock,
   PieChart,
   X,
-  Hammer,
-  Tool,
-  Workflow
+  FileText
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -79,9 +77,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, isMobileView =
       href: '/production',
       children: [
         { name: 'Przegląd', icon: LayoutDashboard, href: '/production' },
-        { name: 'Zlecenia produkcyjne', icon: Workflow, href: '/production/orders' },
+        { name: 'Zlecenia produkcyjne', icon: FileText, href: '/production/orders' },
         { name: 'Planowanie produkcji', icon: CalendarDays, href: '/production/planning' },
-        { name: 'Stany zasobów', icon: Tool, href: '/production/resources' },
+        { name: 'Stany zasobów', icon: Package, href: '/production/resources' },
         { name: 'Historia produkcji', icon: Clock, href: '/production/history' },
         { name: 'Wydajność produkcji', icon: PieChart, href: '/production/performance' },
       ]
