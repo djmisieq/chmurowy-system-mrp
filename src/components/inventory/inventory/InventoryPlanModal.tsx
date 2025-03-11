@@ -1,17 +1,23 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
-import { Inventory, mockCategories, mockLocations, getCategoryName, getLocationName } from '../mockInventory';
+import { X, Plus, Calendar, Users } from 'lucide-react';
+import { Inventory, mockCategories, mockLocations } from '../mockInventory';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Alert from '@/components/ui/Alert';
 
 interface InventoryPlanModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: Partial<Inventory>) => void;
+  isLoading?: boolean;
 }
 
 const InventoryPlanModal: React.FC<InventoryPlanModalProps> = ({
   isOpen,
   onClose,
-  onSave
+  onSave,
+  isLoading = false
 }) => {
   const [inventoryData, setInventoryData] = useState<Partial<Inventory>>({
     name: '',
@@ -33,6 +39,7 @@ const InventoryPlanModal: React.FC<InventoryPlanModalProps> = ({
   
   const [newUser, setNewUser] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showValidationAlert, setShowValidationAlert] = useState(false);
   
   if (!isOpen) return null;
   
@@ -126,7 +133,13 @@ const InventoryPlanModal: React.FC<InventoryPlanModalProps> = ({
     }
     
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    
+    if (Object.keys(newErrors).length > 0) {
+      setShowValidationAlert(true);
+      return false;
+    }
+    
+    return true;
   };
   
   // Zapisz inwentaryzację
@@ -159,73 +172,72 @@ const InventoryPlanModal: React.FC<InventoryPlanModalProps> = ({
               </button>
             </div>
             
+            {showValidationAlert && (
+              <div className="mb-4">
+                <Alert 
+                  variant="error" 
+                  title="Błędy formularza" 
+                  dismissible 
+                  onDismiss={() => setShowValidationAlert(false)}
+                >
+                  Prosimy poprawić błędy w formularzu, aby kontynuować.
+                </Alert>
+              </div>
+            )}
+            
             <div className="mt-2 max-h-[70vh] overflow-y-auto pr-1">
               <form>
                 {/* Podstawowe informacje */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                      Nazwa inwentaryzacji *
-                    </label>
-                    <input
-                      type="text"
+                    <Input
+                      label="Nazwa inwentaryzacji *"
                       name="name"
                       id="name"
                       value={inventoryData.name}
                       onChange={handleInputChange}
-                      className={`mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md ${
-                        errors.name ? 'border-red-300' : ''
-                      }`}
+                      error={errors.name}
                     />
-                    {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
                   </div>
                   
                   <div>
-                    <label htmlFor="planDate" className="block text-sm font-medium text-gray-700">
-                      Data inwentaryzacji *
-                    </label>
-                    <input
+                    <Input
+                      label="Data inwentaryzacji *"
                       type="date"
                       name="planDate"
                       id="planDate"
                       value={inventoryData.planDate}
                       onChange={handleInputChange}
-                      className={`mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md ${
-                        errors.planDate ? 'border-red-300' : ''
-                      }`}
+                      error={errors.planDate}
+                      icon={<Calendar size={18} />}
                     />
-                    {errors.planDate && <p className="mt-1 text-sm text-red-600">{errors.planDate}</p>}
                   </div>
                 </div>
                 
                 <div className="mt-4">
-                  <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-                    Typ inwentaryzacji *
-                  </label>
-                  <select
+                  <Select
+                    label="Typ inwentaryzacji *"
                     id="type"
                     name="type"
                     value={inventoryData.type}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
-                  >
-                    <option value="full">Pełna</option>
-                    <option value="partial">Częściowa</option>
-                    <option value="random">Wyrywkowa</option>
-                  </select>
+                    options={[
+                      { value: 'full', label: 'Pełna' },
+                      { value: 'partial', label: 'Częściowa' },
+                      { value: 'random', label: 'Wyrywkowa' }
+                    ]}
+                  />
                 </div>
                 
                 <div className="mt-4">
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                    Opis
-                  </label>
-                  <textarea
-                    id="description"
+                  <Input
+                    label="Opis"
                     name="description"
-                    rows={3}
-                    value={inventoryData.description}
+                    id="description"
+                    value={inventoryData.description || ''}
                     onChange={handleInputChange}
-                    className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                    multiline
+                    rows={3}
                   />
                 </div>
                 
@@ -237,7 +249,7 @@ const InventoryPlanModal: React.FC<InventoryPlanModalProps> = ({
                         Kategorie
                       </label>
                       <div className={`border border-gray-300 rounded-md max-h-40 overflow-y-auto p-2 ${
-                        errors.categories ? 'border-red-300' : ''
+                        errors.categories ? 'border-danger-500' : ''
                       }`}>
                         {mockCategories.map(category => (
                           <div key={category.id} className="flex items-center mb-1">
@@ -254,7 +266,7 @@ const InventoryPlanModal: React.FC<InventoryPlanModalProps> = ({
                           </div>
                         ))}
                       </div>
-                      {errors.categories && <p className="mt-1 text-sm text-red-600">{errors.categories}</p>}
+                      {errors.categories && <p className="mt-1 text-sm text-danger-500">{errors.categories}</p>}
                     </div>
                     
                     <div>
@@ -289,7 +301,7 @@ const InventoryPlanModal: React.FC<InventoryPlanModalProps> = ({
                     Przypisani użytkownicy *
                   </label>
                   <div className={`border border-gray-300 rounded-md max-h-32 overflow-y-auto p-2 mb-2 ${
-                    errors.assignedUsers ? 'border-red-300' : ''
+                    errors.assignedUsers ? 'border-danger-500' : ''
                   }`}>
                     {users.map(user => (
                       <div key={user} className="flex items-center mb-1">
@@ -306,7 +318,7 @@ const InventoryPlanModal: React.FC<InventoryPlanModalProps> = ({
                       </div>
                     ))}
                   </div>
-                  {errors.assignedUsers && <p className="mt-1 text-sm text-red-600">{errors.assignedUsers}</p>}
+                  {errors.assignedUsers && <p className="mt-1 text-sm text-danger-500">{errors.assignedUsers}</p>}
                   
                   <div className="flex">
                     <input
@@ -317,13 +329,14 @@ const InventoryPlanModal: React.FC<InventoryPlanModalProps> = ({
                       onChange={(e) => setNewUser(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddUser())}
                     />
-                    <button
-                      type="button"
+                    <Button
+                      variant="primary"
+                      icon={<Plus size={16} />}
                       onClick={handleAddUser}
-                      className="inline-flex items-center px-3 py-2 border border-transparent border-l-0 text-sm font-medium rounded-r-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                      className="rounded-l-none"
                     >
                       Dodaj
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>
@@ -331,20 +344,20 @@ const InventoryPlanModal: React.FC<InventoryPlanModalProps> = ({
           </div>
           
           <div className="bg-gray-50 px-4 py-3 sm:px-6 flex flex-col sm:flex-row-reverse sm:gap-2">
-            <button
-              type="button"
+            <Button
+              variant="primary"
               onClick={handleSave}
-              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm"
+              disabled={isLoading}
             >
-              Zaplanuj inwentaryzację
-            </button>
-            <button
-              type="button"
+              {isLoading ? 'Przetwarzanie...' : 'Zaplanuj inwentaryzację'}
+            </Button>
+            <Button
+              variant="outline"
               onClick={onClose}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:w-auto sm:text-sm"
+              disabled={isLoading}
             >
               Anuluj
-            </button>
+            </Button>
           </div>
         </div>
       </div>
