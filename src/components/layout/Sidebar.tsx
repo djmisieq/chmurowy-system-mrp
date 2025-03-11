@@ -25,7 +25,9 @@ import {
   Clock,
   PieChart,
   X,
-  FileText
+  FileText,
+  Palette,
+  BookOpen
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -39,6 +41,7 @@ interface MenuItem {
   icon: React.FC<any>;
   href: string;
   children?: MenuItem[];
+  devOnly?: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, isMobileView = false }) => {
@@ -47,6 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, isMobileView =
     'Magazyn': true, // Rozwinięty domyślnie
     'Zamówienia': true, // Rozwinięty domyślnie
     'Produkcja': true, // Rozwinięty domyślnie
+    'Dokumentacja': false, // Zwinięty domyślnie
   });
   
   // Reset expanded items when sidebar is closed (for desktop view)
@@ -98,6 +102,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, isMobileView =
     },
     { name: 'Raporty', icon: BarChart2, href: '/reports' },
     { name: 'Ustawienia', icon: Settings, href: '/settings' },
+    { 
+      name: 'Dokumentacja', 
+      icon: BookOpen, 
+      href: '/ui-system',
+      devOnly: true,
+      children: [
+        { name: 'System UI', icon: Palette, href: '/ui-system' },
+        { name: 'Uproszczona dokumentacja', icon: FileText, href: '/ui-system/page-simple' },
+      ]
+    },
   ];
 
   const toggleExpand = (name: string) => {
@@ -117,6 +131,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, isMobileView =
   const isChildActive = (href: string) => {
     return pathname === href || pathname.startsWith(`${href}/`);
   };
+
+  // Filter out dev-only items in production
+  const filteredMenuItems = process.env.NODE_ENV === 'production'
+    ? menuItems.filter(item => !item.devOnly)
+    : menuItems;
 
   // Classes for sidebar positioning
   const sidebarClasses = `
@@ -147,7 +166,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, isMobileView =
       
       <nav className="mt-4">
         <ul>
-          {menuItems.map((item) => (
+          {filteredMenuItems.map((item) => (
             <li key={item.name} className="mb-1">
               {item.children ? (
                 <div>
