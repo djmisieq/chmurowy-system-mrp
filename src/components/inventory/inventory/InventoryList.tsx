@@ -1,6 +1,9 @@
 import React from 'react';
 import { Eye, Play, XCircle, Calendar, Users, CheckCircle } from 'lucide-react';
 import { Inventory, formatDate } from '../mockInventory';
+import Badge from '@/components/ui/Badge';
+import Tooltip from '@/components/ui/Tooltip';
+import Dropdown from '@/components/ui/Dropdown';
 
 interface InventoryListProps {
   inventories: Inventory[];
@@ -21,17 +24,17 @@ const InventoryList: React.FC<InventoryListProps> = ({
   const getStatusDisplay = (status: string) => {
     switch (status) {
       case 'planned':
-        return { label: 'Zaplanowana', color: 'bg-blue-100 text-blue-800' };
+        return { label: 'Zaplanowana', variant: 'info' as const };
       case 'in_progress':
-        return { label: 'W trakcie', color: 'bg-yellow-100 text-yellow-800' };
+        return { label: 'W trakcie', variant: 'warning' as const };
       case 'completed':
-        return { label: 'Zakończona', color: 'bg-green-100 text-green-800' };
+        return { label: 'Zakończona', variant: 'success' as const };
       case 'approved':
-        return { label: 'Zatwierdzona', color: 'bg-green-100 text-green-800' };
+        return { label: 'Zatwierdzona', variant: 'success' as const };
       case 'canceled':
-        return { label: 'Anulowana', color: 'bg-red-100 text-red-800' };
+        return { label: 'Anulowana', variant: 'danger' as const };
       default:
-        return { label: status, color: 'bg-gray-100 text-gray-800' };
+        return { label: status, variant: 'default' as const };
     }
   };
   
@@ -55,6 +58,38 @@ const InventoryList: React.FC<InventoryListProps> = ({
     
     const countedItems = inventory.items.filter(item => item.status !== 'pending').length;
     return Math.round((countedItems / inventory.items.length) * 100);
+  };
+
+  // Utwórz menu akcji dla każdej inwentaryzacji
+  const getActionMenu = (inventory: Inventory) => {
+    const actions = [
+      { 
+        id: 'view', 
+        label: 'Zobacz szczegóły', 
+        icon: <Eye size={16} />, 
+        onClick: () => onViewDetails(inventory.id) 
+      }
+    ];
+
+    if (inventory.status === 'planned') {
+      actions.push({ 
+        id: 'start', 
+        label: 'Rozpocznij inwentaryzację', 
+        icon: <Play size={16} />, 
+        onClick: () => onStartInventory(inventory.id) 
+      });
+    }
+
+    if (inventory.status === 'planned' || inventory.status === 'in_progress') {
+      actions.push({ 
+        id: 'cancel', 
+        label: 'Anuluj inwentaryzację', 
+        icon: <XCircle size={16} />, 
+        onClick: () => onCancelInventory(inventory.id) 
+      });
+    }
+
+    return actions;
   };
   
   return (
@@ -87,6 +122,7 @@ const InventoryList: React.FC<InventoryListProps> = ({
           {inventories.map((inventory) => {
             const statusDisplay = getStatusDisplay(inventory.status);
             const progress = calculateProgress(inventory);
+            const actionMenu = getActionMenu(inventory);
             
             return (
               <div key={inventory.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
@@ -96,55 +132,46 @@ const InventoryList: React.FC<InventoryListProps> = ({
                       {inventory.name}
                     </p>
                     <div className="mt-2 sm:mt-0 flex flex-wrap gap-2">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusDisplay.color}`}>
+                      <Badge variant={statusDisplay.variant} size="sm">
                         {statusDisplay.label}
-                      </span>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      </Badge>
+                      <Badge size="sm">
                         {getTypeDisplay(inventory.type)}
-                      </span>
+                      </Badge>
                     </div>
                   </div>
-                  <div className="ml-2 flex-shrink-0 flex">
-                    <button
-                      onClick={() => onViewDetails(inventory.id)}
-                      className="ml-2 text-gray-500 hover:text-gray-700"
-                      title="Szczegóły"
-                    >
-                      <Eye size={18} />
-                    </button>
-                    
-                    {inventory.status === 'planned' && (
-                      <button
-                        onClick={() => onStartInventory(inventory.id)}
-                        className="ml-2 text-primary-500 hover:text-primary-700"
-                        title="Rozpocznij"
-                      >
-                        <Play size={18} />
-                      </button>
-                    )}
-                    
-                    {(inventory.status === 'planned' || inventory.status === 'in_progress') && (
-                      <button
-                        onClick={() => onCancelInventory(inventory.id)}
-                        className="ml-2 text-red-500 hover:text-red-700"
-                        title="Anuluj"
-                      >
-                        <XCircle size={18} />
-                      </button>
-                    )}
+                  <div className="ml-2 flex-shrink-0">
+                    <Dropdown
+                      trigger={
+                        <button className="text-gray-500 hover:text-gray-700 p-1 rounded">
+                          <Eye size={18} />
+                        </button>
+                      }
+                      items={actionMenu}
+                      align="right"
+                      width="w-56"
+                    />
                   </div>
                 </div>
                 
                 <div className="sm:flex sm:justify-between mt-2">
                   <div className="sm:flex">
                     <div className="flex items-center text-sm text-gray-500 mr-6">
-                      <Calendar size={16} className="flex-shrink-0 mr-1.5 text-gray-400" />
-                      <span>{formatDate(inventory.planDate)}</span>
+                      <Tooltip content="Data zaplanowania" position="top">
+                        <div className="flex items-center">
+                          <Calendar size={16} className="flex-shrink-0 mr-1.5 text-gray-400" />
+                          <span>{formatDate(inventory.planDate)}</span>
+                        </div>
+                      </Tooltip>
                     </div>
                     
                     <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                      <Users size={16} className="flex-shrink-0 mr-1.5 text-gray-400" />
-                      <span>{inventory.assignedUsers.join(', ')}</span>
+                      <Tooltip content="Przypisani użytkownicy" position="top">
+                        <div className="flex items-center">
+                          <Users size={16} className="flex-shrink-0 mr-1.5 text-gray-400" />
+                          <span>{inventory.assignedUsers.join(', ')}</span>
+                        </div>
+                      </Tooltip>
                     </div>
                   </div>
                   
@@ -163,8 +190,12 @@ const InventoryList: React.FC<InventoryListProps> = ({
                   
                   {inventory.status === 'completed' && (
                     <div className="mt-2 sm:mt-0 flex items-center text-sm text-gray-500">
-                      <CheckCircle size={16} className="flex-shrink-0 mr-1.5 text-green-500" />
-                      <span>Zakończono {inventory.endDate ? formatDate(inventory.endDate) : ''}</span>
+                      <Tooltip content="Data zakończenia" position="top">
+                        <div className="flex items-center">
+                          <CheckCircle size={16} className="flex-shrink-0 mr-1.5 text-success-500" />
+                          <span>Zakończono {inventory.endDate ? formatDate(inventory.endDate) : ''}</span>
+                        </div>
+                      </Tooltip>
                     </div>
                   )}
                 </div>
