@@ -1,0 +1,318 @@
+[
+  {
+    "id": "ROUTE-001",
+    "name": "Marszruta produkcyjna - Motorówka Sport 175",
+    "description": "Proces produkcyjny dla łodzi Motorówka Sport 175",
+    "productId": "PROD-001",
+    "productName": "Motorówka Sport 175",
+    "version": "1.0",
+    "status": "active",
+    "effectiveDate": "2025-01-01T00:00:00Z",
+    "createdBy": "system",
+    "createdAt": "2025-01-01T00:00:00Z",
+    "totalSetupTime": 480,
+    "totalProcessingTime": 960,
+    "operations": [
+      {
+        "id": "OP-001",
+        "name": "Formowanie kadłuba",
+        "description": "Przygotowanie i formowanie kadłuba łodzi",
+        "workCenter": "WC-001",
+        "workCenterName": "Stanowisko formowania",
+        "setupTime": 60,
+        "processingTime": 240,
+        "laborSkill": "Laminowanie",
+        "laborCount": 2,
+        "instructions": "Przygotować formę, nałożyć środek antyadhezyjny, nałożyć żelkot, aplikować warstwy maty szklanej i żywicy, czekać na utwardzenie",
+        "predecessors": [],
+        "status": "pending",
+        "resourceRequirements": [
+          {
+            "resourceId": "RES-001",
+            "resourceName": "Forma kadłuba Sport 175",
+            "resourceType": "tool",
+            "quantity": 1,
+            "unitOfMeasure": "szt",
+            "required": true
+          },
+          {
+            "resourceId": "RES-002",
+            "resourceName": "Stanowisko laminowania",
+            "resourceType": "space",
+            "quantity": 1,
+            "unitOfMeasure": "szt",
+            "required": true
+          }
+        ],
+        "qualityChecks": [
+          {
+            "id": "QC-001",
+            "name": "Kontrola grubości laminatu",
+            "description": "Sprawdzenie grubości laminatu w kluczowych punktach",
+            "checkType": "measurement",
+            "targetValue": 5,
+            "tolerance": 0.5,
+            "unitOfMeasure": "mm",
+            "required": true
+          },
+          {
+            "id": "QC-002",
+            "name": "Kontrola wizualna powierzchni",
+            "description": "Sprawdzenie powierzchni pod kątem pęcherzy powietrza i innych defektów",
+            "checkType": "visual",
+            "required": true
+          }
+        ],
+        "subOperations": [
+          {
+            "id": "SOP-001",
+            "name": "Przygotowanie formy",
+            "description": "Czyszczenie i przygotowanie formy",
+            "workCenter": "WC-001",
+            "workCenterName": "Stanowisko formowania",
+            "setupTime": 30,
+            "processingTime": 60,
+            "laborCount": 1
+          },
+          {
+            "id": "SOP-002",
+            "name": "Aplikacja żelkotu",
+            "description": "Naniesienie warstwy żelkotu",
+            "workCenter": "WC-001",
+            "workCenterName": "Stanowisko formowania",
+            "setupTime": 15,
+            "processingTime": 30,
+            "laborCount": 1
+          },
+          {
+            "id": "SOP-003",
+            "name": "Laminowanie",
+            "description": "Nakładanie warstw maty i żywicy",
+            "workCenter": "WC-001",
+            "workCenterName": "Stanowisko formowania",
+            "setupTime": 15,
+            "processingTime": 120,
+            "laborCount": 2
+          },
+          {
+            "id": "SOP-004",
+            "name": "Utwardzanie",
+            "description": "Okres utwardzania laminatu",
+            "workCenter": "WC-001",
+            "workCenterName": "Stanowisko formowania",
+            "setupTime": 0,
+            "processingTime": 30,
+            "laborCount": 0
+          }
+        ]
+      },
+      {
+        "id": "OP-002",
+        "name": "Formowanie pokładu",
+        "description": "Przygotowanie i formowanie pokładu łodzi",
+        "workCenter": "WC-001",
+        "workCenterName": "Stanowisko formowania",
+        "setupTime": 60,
+        "processingTime": 180,
+        "laborSkill": "Laminowanie",
+        "laborCount": 2,
+        "instructions": "Przygotować formę pokładu, nałożyć środek antyadhezyjny, nałożyć żelkot, aplikować warstwy maty szklanej i żywicy, czekać na utwardzenie",
+        "predecessors": [],
+        "status": "pending"
+      },
+      {
+        "id": "OP-003",
+        "name": "Instalacja wzmocnień kadłuba",
+        "description": "Montaż wzmocnień konstrukcyjnych kadłuba",
+        "workCenter": "WC-002",
+        "workCenterName": "Stanowisko montażu",
+        "setupTime": 30,
+        "processingTime": 120,
+        "laborSkill": "Montaż",
+        "laborCount": 2,
+        "instructions": "Zamontować profile aluminiowe zgodnie z dokumentacją techniczną, przykręcić śrubami",
+        "predecessors": ["OP-001"],
+        "status": "pending"
+      },
+      {
+        "id": "OP-004",
+        "name": "Łączenie kadłuba z pokładem",
+        "description": "Połączenie przygotowanego kadłuba z pokładem",
+        "workCenter": "WC-002",
+        "workCenterName": "Stanowisko montażu",
+        "setupTime": 90,
+        "processingTime": 180,
+        "laborSkill": "Montaż zaawansowany",
+        "laborCount": 3,
+        "instructions": "Nałożyć klej uszczelniający na krawędzie, połączyć elementy, dokręcić śruby montażowe",
+        "predecessors": ["OP-002", "OP-003"],
+        "status": "pending"
+      },
+      {
+        "id": "OP-005",
+        "name": "Instalacja układu napędowego",
+        "description": "Montaż silnika i układu sterowania",
+        "workCenter": "WC-003",
+        "workCenterName": "Stanowisko mechaniczne",
+        "setupTime": 60,
+        "processingTime": 120,
+        "laborSkill": "Mechanik",
+        "laborCount": 2,
+        "instructions": "Zainstalować silnik zaburtowy, podłączyć układ sterowania",
+        "predecessors": ["OP-004"],
+        "status": "pending"
+      },
+      {
+        "id": "OP-006",
+        "name": "Montaż wyposażenia",
+        "description": "Instalacja foteli, panelu sterowania i innych elementów wyposażenia",
+        "workCenter": "WC-004",
+        "workCenterName": "Stanowisko wykończeniowe",
+        "setupTime": 30,
+        "processingTime": 120,
+        "laborSkill": "Montaż wykończeniowy",
+        "laborCount": 2,
+        "instructions": "Zamontować fotele, kanapę, panel sterowania",
+        "predecessors": ["OP-004"],
+        "status": "pending"
+      },
+      {
+        "id": "OP-007",
+        "name": "Kontrola jakości i testy",
+        "description": "Końcowa kontrola jakości i testy funkcjonalności",
+        "workCenter": "WC-005",
+        "workCenterName": "Stanowisko kontroli jakości",
+        "setupTime": 30,
+        "processingTime": 120,
+        "laborSkill": "Kontrola jakości",
+        "laborCount": 1,
+        "instructions": "Przeprowadzić kontrolę wizualną, sprawdzić funkcjonalność wszystkich elementów",
+        "predecessors": ["OP-005", "OP-006"],
+        "status": "pending"
+      }
+    ]
+  },
+  {
+    "id": "ROUTE-002",
+    "name": "Marszruta produkcyjna - Motorówka Cruiser 230",
+    "description": "Proces produkcyjny dla łodzi Motorówka Cruiser 230",
+    "productId": "PROD-002",
+    "productName": "Motorówka Cruiser 230",
+    "version": "1.0",
+    "status": "active",
+    "effectiveDate": "2025-01-01T00:00:00Z",
+    "createdBy": "system",
+    "createdAt": "2025-01-01T00:00:00Z",
+    "totalSetupTime": 600,
+    "totalProcessingTime": 1440,
+    "operations": [
+      {
+        "id": "OP-101",
+        "name": "Formowanie kadłuba wzmocnionego",
+        "description": "Przygotowanie i formowanie wzmocnionego kadłuba łodzi cruiser",
+        "workCenter": "WC-001",
+        "workCenterName": "Stanowisko formowania",
+        "setupTime": 90,
+        "processingTime": 360,
+        "laborSkill": "Laminowanie zaawansowane",
+        "laborCount": 3,
+        "predecessors": [],
+        "status": "pending"
+      },
+      {
+        "id": "OP-102",
+        "name": "Budowa kabiny nawigacyjnej",
+        "description": "Formowanie i montaż kabiny nawigacyjnej",
+        "workCenter": "WC-001",
+        "workCenterName": "Stanowisko formowania",
+        "setupTime": 60,
+        "processingTime": 240,
+        "laborSkill": "Laminowanie",
+        "laborCount": 2,
+        "predecessors": [],
+        "status": "pending"
+      },
+      {
+        "id": "OP-103",
+        "name": "Łączenie komponentów kadłuba",
+        "description": "Montaż kadłuba z kabiną nawigacyjną",
+        "workCenter": "WC-002",
+        "workCenterName": "Stanowisko montażu",
+        "setupTime": 120,
+        "processingTime": 240,
+        "laborSkill": "Montaż zaawansowany",
+        "laborCount": 4,
+        "predecessors": ["OP-101", "OP-102"],
+        "status": "pending"
+      },
+      {
+        "id": "OP-104",
+        "name": "Instalacja układu napędowego stacjonarnego",
+        "description": "Montaż silnika stacjonarnego i układu napędowego",
+        "workCenter": "WC-003",
+        "workCenterName": "Stanowisko mechaniczne",
+        "setupTime": 120,
+        "processingTime": 300,
+        "laborSkill": "Mechanik zaawansowany",
+        "laborCount": 3,
+        "predecessors": ["OP-103"],
+        "status": "pending",
+        "subOperations": [
+          {
+            "id": "SOP-101",
+            "name": "Montaż silnika",
+            "description": "Montaż silnika na łożu",
+            "workCenter": "WC-003",
+            "workCenterName": "Stanowisko mechaniczne",
+            "setupTime": 60,
+            "processingTime": 120,
+            "laborCount": 3
+          },
+          {
+            "id": "SOP-102",
+            "name": "Instalacja przekładni",
+            "description": "Montaż przekładni napędowej",
+            "workCenter": "WC-003",
+            "workCenterName": "Stanowisko mechaniczne",
+            "setupTime": 30,
+            "processingTime": 60,
+            "laborCount": 2
+          },
+          {
+            "id": "SOP-103",
+            "name": "Instalacja wału i śruby",
+            "description": "Montaż wału napędowego i śruby",
+            "workCenter": "WC-003",
+            "workCenterName": "Stanowisko mechaniczne",
+            "setupTime": 30,
+            "processingTime": 90,
+            "laborCount": 3
+          },
+          {
+            "id": "SOP-104",
+            "name": "Regulacja układu napędowego",
+            "description": "Regulacja i testy układu napędowego",
+            "workCenter": "WC-003",
+            "workCenterName": "Stanowisko mechaniczne",
+            "setupTime": 0,
+            "processingTime": 30,
+            "laborCount": 2
+          }
+        ]
+      },
+      {
+        "id": "OP-105",
+        "name": "Wykończenie i kontrola jakości",
+        "description": "Końcowe wykończenie i kontrola jakości",
+        "workCenter": "WC-005",
+        "workCenterName": "Stanowisko kontroli jakości",
+        "setupTime": 60,
+        "processingTime": 300,
+        "laborSkill": "Kontrola jakości zaawansowana",
+        "laborCount": 2,
+        "predecessors": ["OP-104"],
+        "status": "pending"
+      }
+    ]
+  }
+]
