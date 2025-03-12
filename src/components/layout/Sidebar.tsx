@@ -27,7 +27,11 @@ import {
   X,
   FileText,
   Palette,
-  BookOpen
+  BookOpen,
+  Layers,
+  GitBranch,
+  Route,
+  Network
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -82,6 +86,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, isMobileView =
       children: [
         { name: 'Przegląd', icon: LayoutDashboard, href: '/production' },
         { name: 'Zlecenia produkcyjne', icon: FileText, href: '/production/orders' },
+        { name: 'Struktura produktów (BOM)', icon: Layers, href: '/production/bom' },
+        { name: 'Marszruty technologiczne', icon: Route, href: '/production/routes' },
         { name: 'Planowanie produkcji', icon: CalendarDays, href: '/production/planning' },
         { name: 'Stany zasobów', icon: Package, href: '/production/resources' },
         { name: 'Historia produkcji', icon: Clock, href: '/production/history' },
