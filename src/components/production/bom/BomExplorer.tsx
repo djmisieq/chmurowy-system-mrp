@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { SearchIcon, RefreshCw, Download, Eye, Table, FileText, Edit, Plus, Sidebar, PanelRightClose, PanelRightOpen, FilePlus } from 'lucide-react';
+import { SearchIcon, RefreshCw, Download, Eye, Table, FileText, Edit, Plus, Sidebar, PanelRightClose, PanelRightOpen, FilePlus, MoveHorizontal } from 'lucide-react';
 import BomTreeView from './BomTreeView';
+import BomTreeViewDraggable from './BomTreeViewDraggable';
 import BomItemDetail from './BomItemDetail';
 import BomItemAddModal from './BomItemAddModal';
 import BomItemEditModal from './BomItemEditModal';
@@ -29,6 +30,9 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<BomItem | null>(null);
+  
+  // State for drag and drop
+  const [isDragEnabled, setIsDragEnabled] = useState(true);
 
   useEffect(() => {
     const fetchBoms = async () => {
@@ -302,6 +306,126 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
     setShowEditModal(false);
     setItemToEdit(null);
   };
+  
+  // Handler for drag and drop operations
+  const handleItemDrop = (draggedItemId: string, targetItemId: string, position: 'inside' | 'before' | 'after') => {
+    if (!selectedBom) return;
+    
+    // Deep clone the BOM to avoid directly mutating state
+    const updatedBom = JSON.parse(JSON.stringify(selectedBom)) as ProductBom;
+    
+    // First, find and extract the dragged item from its current location
+    let draggedItem: BomItem | null = null;
+    
+    // Function to recursively find and remove an item
+    const removeItemById = (items: BomItem[]): BomItem[] => {
+      return items.filter(item => {
+        if (item.id === draggedItemId) {
+          draggedItem = { ...item }; // Store the dragged item before removing
+          return false; // Remove from its current position
+        }
+        
+        // Check children recursively
+        if (item.children && item.children.length > 0) {
+          item.children = removeItemById(item.children);
+        }
+        
+        return true;
+      });
+    };
+    
+    // Special case for root item (can't move root)
+    if (updatedBom.rootItem.id === draggedItemId) {
+      alert('Nie można przenieść głównego elementu struktury BOM.');
+      return;
+    }
+    
+    // Remove the dragged item from its current position
+    if (updatedBom.rootItem.children) {
+      updatedBom.rootItem.children = removeItemById(updatedBom.rootItem.children);
+    }
+    
+    // If the dragged item was not found, exit
+    if (!draggedItem) {
+      console.error('Nie znaleziono przenoszonego elementu.');
+      return;
+    }
+    
+    // Now, find the target item and insert the dragged item in the appropriate position
+    const insertItem = (items: BomItem[]): boolean => {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].id === targetItemId) {
+          // Found the target item
+          switch (position) {
+            case 'inside':
+              // Add as a child of this item
+              if (!items[i].children) {
+                items[i].children = [];
+              }
+              items[i].children.push(draggedItem!);
+              return true;
+            
+            case 'before':
+              // Insert before this item
+              items.splice(i, 0, draggedItem!);
+              return true;
+            
+            case 'after':
+              // Insert after this item
+              items.splice(i + 1, 0, draggedItem!);
+              return true;
+          }
+        }
+        
+        // Check children recursively
+        if (items[i].children && items[i].children.length > 0) {
+          if (insertItem(items[i].children)) {
+            return true;
+          }
+        }
+      }
+      
+      return false;
+    };
+    
+    // Handle drop onto the root item
+    if (updatedBom.rootItem.id === targetItemId) {
+      switch (position) {
+        case 'inside':
+          // Add as a child of root
+          if (!updatedBom.rootItem.children) {
+            updatedBom.rootItem.children = [];
+          }
+          updatedBom.rootItem.children.push(draggedItem);
+          break;
+        
+        case 'before':
+        case 'after':
+          // Can't insert before or after root, so just add as a child
+          if (!updatedBom.rootItem.children) {
+            updatedBom.rootItem.children = [];
+          }
+          updatedBom.rootItem.children.push(draggedItem);
+          break;
+      }
+    } else if (updatedBom.rootItem.children) {
+      // Insert into the tree
+      insertItem(updatedBom.rootItem.children);
+    }
+    
+    // Update the BOM in state
+    setSelectedBom(updatedBom);
+    
+    // Update in the boms array
+    setBoms(prevBoms => prevBoms.map(bom => 
+      bom.id === updatedBom.id ? updatedBom : bom
+    ));
+    
+    // If the moved item is the currently selected item, update the selection
+    if (selectedItem && selectedItem.id === draggedItemId) {
+      setSelectedItem(draggedItem);
+    }
+  };
 
   const renderContent = () => {
     if (loading) {
@@ -324,23 +448,50 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
       case 'tree':
         return (
           <div className="p-4">
-            <div className="flex justify-end mb-3">
-              <button
-                onClick={handleAddItem}
-                className="px-3 py-1 flex items-center text-sm bg-primary-50 hover:bg-primary-100 text-primary-700 rounded border border-primary-200"
-                disabled={!selectedBom}
-                title="Dodaj nowy element do BOM"
-              >
-                <FilePlus size={16} className="mr-1" />
-                Dodaj element
-              </button>
+            <div className="flex justify-between mb-3">
+              <div>
+                <button
+                  onClick={() => setIsDragEnabled(!isDragEnabled)}
+                  className={`px-3 py-1 mr-2 flex items-center text-sm ${
+                    isDragEnabled 
+                      ? 'bg-green-50 text-green-700 border border-green-200' 
+                      : 'bg-gray-100 text-gray-700 border border-gray-200'
+                  } rounded`}
+                  title={isDragEnabled ? "Wyłącz drag & drop" : "Włącz drag & drop"}
+                >
+                  <MoveHorizontal size={16} className="mr-1" />
+                  {isDragEnabled ? "Drag & Drop włączony" : "Drag & Drop wyłączony"}
+                </button>
+              </div>
+              <div>
+                <button
+                  onClick={handleAddItem}
+                  className="px-3 py-1 flex items-center text-sm bg-primary-50 hover:bg-primary-100 text-primary-700 rounded border border-primary-200"
+                  disabled={!selectedBom}
+                  title="Dodaj nowy element do BOM"
+                >
+                  <FilePlus size={16} className="mr-1" />
+                  Dodaj element
+                </button>
+              </div>
             </div>
-            <BomTreeView 
-              item={selectedBom.rootItem} 
-              expandedByDefault={true} 
-              onItemSelect={handleItemSelect}
-              selectedItemId={selectedItem?.id}
-            />
+            
+            {isDragEnabled ? (
+              <BomTreeViewDraggable 
+                item={selectedBom.rootItem} 
+                expandedByDefault={true} 
+                onItemSelect={handleItemSelect}
+                selectedItemId={selectedItem?.id}
+                onDrop={handleItemDrop}
+              />
+            ) : (
+              <BomTreeView 
+                item={selectedBom.rootItem} 
+                expandedByDefault={true} 
+                onItemSelect={handleItemSelect}
+                selectedItemId={selectedItem?.id}
+              />
+            )}
           </div>
         );
       case 'table':
