@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { SearchIcon, RefreshCw, Download, Eye, Table, FileText, Edit, Plus, Sidebar, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { SearchIcon, RefreshCw, Download, Eye, Table, FileText, Edit, Plus, Sidebar, PanelRightClose, PanelRightOpen, FilePlus } from 'lucide-react';
 import BomTreeView from './BomTreeView';
 import BomItemDetail from './BomItemDetail';
+import BomItemAddModal from './BomItemAddModal';
 import { ProductBom, BomItem } from '@/types/bom.types';
 import { useRouter } from 'next/navigation';
 
@@ -22,6 +23,9 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItem, setSelectedItem] = useState<BomItem | null>(null);
   const [showSidebar, setShowSidebar] = useState(true);
+  
+  // State for item add modal
+  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     const fetchBoms = async () => {
@@ -108,6 +112,82 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
     }
   };
 
+  const handleAddItem = () => {
+    setShowAddModal(true);
+  };
+
+  const handleSaveNewItem = (newItem: Omit<BomItem, 'id'>) => {
+    if (!selectedBom) return;
+    
+    // In a real application, we would send this to the server
+    // For now, we'll just add it to the selectedBom in memory
+    
+    // Create a new item with a generated ID
+    const itemWithId: BomItem = {
+      ...newItem,
+      id: `item-${Date.now()}`, // Generate a unique ID
+    };
+    
+    // If an item is selected, add as a child to that item
+    if (selectedItem) {
+      // Deep clone the BOM to avoid directly mutating state
+      const updatedBom = JSON.parse(JSON.stringify(selectedBom)) as ProductBom;
+      
+      // Function to recursively find and update the selected item
+      const updateItemChildren = (items: BomItem[]): boolean => {
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].id === selectedItem.id) {
+            // Found the selected item, add the new item as a child
+            if (!items[i].children) {
+              items[i].children = [];
+            }
+            items[i].children.push(itemWithId);
+            return true;
+          }
+          
+          // Recursively search in children
+          if (items[i].children && updateItemChildren(items[i].children)) {
+            return true;
+          }
+        }
+        return false;
+      };
+      
+      // Start the recursive search from the root item
+      if (updatedBom.rootItem.id === selectedItem.id) {
+        if (!updatedBom.rootItem.children) {
+          updatedBom.rootItem.children = [];
+        }
+        updatedBom.rootItem.children.push(itemWithId);
+      } else if (updatedBom.rootItem.children) {
+        updateItemChildren(updatedBom.rootItem.children);
+      }
+      
+      // Update the BOM in state
+      setSelectedBom(updatedBom);
+      
+      // Update in the boms array
+      setBoms(prevBoms => prevBoms.map(bom => 
+        bom.id === updatedBom.id ? updatedBom : bom
+      ));
+    } else {
+      // If no item is selected, add to root item's children
+      const updatedBom = JSON.parse(JSON.stringify(selectedBom)) as ProductBom;
+      
+      if (!updatedBom.rootItem.children) {
+        updatedBom.rootItem.children = [];
+      }
+      updatedBom.rootItem.children.push(itemWithId);
+      
+      setSelectedBom(updatedBom);
+      
+      // Update in the boms array
+      setBoms(prevBoms => prevBoms.map(bom => 
+        bom.id === updatedBom.id ? updatedBom : bom
+      ));
+    }
+  };
+
   const renderContent = () => {
     if (loading) {
       return (
@@ -129,6 +209,17 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
       case 'tree':
         return (
           <div className="p-4">
+            <div className="flex justify-end mb-3">
+              <button
+                onClick={handleAddItem}
+                className="px-3 py-1 flex items-center text-sm bg-primary-50 hover:bg-primary-100 text-primary-700 rounded border border-primary-200"
+                disabled={!selectedBom}
+                title="Dodaj nowy element do BOM"
+              >
+                <FilePlus size={16} className="mr-1" />
+                Dodaj element
+              </button>
+            </div>
             <BomTreeView 
               item={selectedBom.rootItem} 
               expandedByDefault={true} 
@@ -312,10 +403,22 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
             <BomItemDetail 
               item={selectedItem} 
               onClose={() => setSelectedItem(null)} 
+              onEdit={(item) => {
+                // W przyszłości tutaj będzie edycja istniejącego elementu
+                alert(`Edycja elementu "${item.itemName}" zostanie dodana w przyszłej wersji.`);
+              }}
             />
           </div>
         )}
       </div>
+
+      {/* Add item modal */}
+      <BomItemAddModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSave={handleSaveNewItem}
+        parentItem={selectedItem}
+      />
     </div>
   );
 };
