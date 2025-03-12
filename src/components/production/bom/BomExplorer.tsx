@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { SearchIcon, RefreshCw, Download, Eye, Table, FileText, Edit, Plus } from 'lucide-react';
+import { SearchIcon, RefreshCw, Download, Eye, Table, FileText, Edit, Plus, Sidebar, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import BomTreeView from './BomTreeView';
-import { ProductBom } from '@/types/bom.types';
+import BomItemDetail from './BomItemDetail';
+import { ProductBom, BomItem } from '@/types/bom.types';
 import { useRouter } from 'next/navigation';
 
 interface BomExplorerProps {
@@ -19,6 +20,8 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
   const [selectedBom, setSelectedBom] = useState<ProductBom | null>(null);
   const [viewMode, setViewMode] = useState<'tree' | 'table' | 'details'>('tree');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedItem, setSelectedItem] = useState<BomItem | null>(null);
+  const [showSidebar, setShowSidebar] = useState(true);
 
   useEffect(() => {
     const fetchBoms = async () => {
@@ -48,8 +51,10 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
     if (selectedBomId && boms.length > 0) {
       const bom = boms.find(b => b.id === selectedBomId);
       setSelectedBom(bom || null);
+      setSelectedItem(null); // Reset selected item when changing BOM
     } else {
       setSelectedBom(null);
+      setSelectedItem(null);
     }
   }, [selectedBomId, boms]);
 
@@ -94,6 +99,15 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
     }
   };
 
+  const handleItemSelect = (item: BomItem) => {
+    setSelectedItem(item);
+    
+    // Automatically show sidebar when item is selected
+    if (!showSidebar) {
+      setShowSidebar(true);
+    }
+  };
+
   const renderContent = () => {
     if (loading) {
       return (
@@ -115,7 +129,12 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
       case 'tree':
         return (
           <div className="p-4">
-            <BomTreeView item={selectedBom.rootItem} expandedByDefault={true} />
+            <BomTreeView 
+              item={selectedBom.rootItem} 
+              expandedByDefault={true} 
+              onItemSelect={handleItemSelect}
+              selectedItemId={selectedItem?.id}
+            />
           </div>
         );
       case 'table':
@@ -205,6 +224,13 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
           >
             <Download size={20} />
           </button>
+          <button
+            onClick={() => setShowSidebar(!showSidebar)}
+            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded ml-2"
+            title={showSidebar ? "Ukryj panel szczegółów" : "Pokaż panel szczegółów"}
+          >
+            {showSidebar ? <PanelRightClose size={20} /> : <PanelRightOpen size={20} />}
+          </button>
         </div>
       </div>
       
@@ -249,8 +275,8 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
           </div>
         </div>
         
-        {/* Main content area */}
-        <div className="col-span-3">
+        {/* Main content area with optional sidebar */}
+        <div className={`${showSidebar ? 'col-span-2' : 'col-span-3'}`}>
           {/* View mode selector */}
           <div className="flex border-b">
             <button 
@@ -279,6 +305,16 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
           {/* Content area */}
           {renderContent()}
         </div>
+        
+        {/* Details sidebar */}
+        {showSidebar && (
+          <div className="col-span-1 border-l min-h-[600px] overflow-y-auto">
+            <BomItemDetail 
+              item={selectedItem} 
+              onClose={() => setSelectedItem(null)} 
+            />
+          </div>
+        )}
       </div>
     </div>
   );
