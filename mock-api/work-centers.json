@@ -1,0 +1,37 @@
+[
+  {
+    "id": "WC-001",
+    "name": "Stanowisko formowania",
+    "capacity": 2,
+    "costPerHour": 120,
+    "status": "active"
+  },
+  {
+    "id": "WC-002",
+    "name": "Stanowisko montażu",
+    "capacity": 3,
+    "costPerHour": 100,
+    "status": "active"
+  },
+  {
+    "id": "WC-003",
+    "name": "Stanowisko mechaniczne",
+    "capacity": 2,
+    "costPerHour": 130,
+    "status": "active"
+  },
+  {
+    "id": "WC-004",
+    "name": "Stanowisko wykończeniowe",
+    "capacity": 2,
+    "costPerHour": 90,
+    "status": "active"
+  },
+  {
+    "id": "WC-005",
+    "name": "Stanowisko kontroli jakości",
+    "capacity": 1,
+    "costPerHour": 80,
+    "status": "active"
+  }
+]
