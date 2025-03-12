@@ -8,16 +8,21 @@ interface BomTreeViewProps {
   item: BomItem;
   level?: number;
   expandedByDefault?: boolean;
+  onItemSelect?: (item: BomItem) => void;
+  selectedItemId?: string;
 }
 
 const BomTreeView: React.FC<BomTreeViewProps> = ({ 
   item, 
   level = 0,
-  expandedByDefault = false
+  expandedByDefault = false,
+  onItemSelect,
+  selectedItemId
 }) => {
   const [expanded, setExpanded] = useState(expandedByDefault || level === 0);
   
   const hasChildren = item.children && item.children.length > 0;
+  const isSelected = selectedItemId === item.id;
   
   const getItemIcon = (itemType: string) => {
     switch (itemType) {
@@ -48,17 +53,28 @@ const BomTreeView: React.FC<BomTreeViewProps> = ({
         return 'text-gray-700';
     }
   };
+
+  const handleItemClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onItemSelect) {
+      onItemSelect(item);
+    }
+  };
   
   return (
     <div className="mb-1">
       <div 
-        className={`flex items-center py-1 px-2 rounded hover:bg-gray-100 ${level > 0 ? 'ml-6' : ''}`}
+        className={`flex items-center py-1 px-2 rounded hover:bg-gray-100 ${level > 0 ? 'ml-6' : ''} ${isSelected ? 'bg-blue-50 border border-blue-200' : ''} cursor-pointer`}
         style={{ paddingLeft: `${level * 8 + 8}px` }}
+        onClick={handleItemClick}
       >
         <div className="mr-1 w-5">
           {hasChildren && (
             <button
-              onClick={() => setExpanded(!expanded)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded(!expanded);
+              }}
               className="hover:bg-gray-200 rounded p-1"
             >
               {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
@@ -97,6 +113,8 @@ const BomTreeView: React.FC<BomTreeViewProps> = ({
               item={child}
               level={level + 1}
               expandedByDefault={level === 0}
+              onItemSelect={onItemSelect}
+              selectedItemId={selectedItemId}
             />
           ))}
         </div>
