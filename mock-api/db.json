@@ -25,5 +25,31 @@
       { "id": 3, "type": "production", "message": "Rozpoczęta produkcja: Classic 180 (2 szt.)", "timestamp": "2025-03-05T09:00:00Z", "priority": "low" },
       { "id": 4, "type": "inventory", "message": "Niski stan magazynowy: Kadłub 18ft Classic", "timestamp": "2025-03-06T07:45:00Z", "priority": "medium" }
     ]
-  }
+  },
+  "products": [
+    { "id": "PROD-001", "name": "Motorówka Sport 175", "category": "Łodzie sportowe", "status": "active" },
+    { "id": "PROD-002", "name": "Motorówka Cruiser 230", "category": "Łodzie kabinowe", "status": "active" }
+  ],
+  "materials": [
+    { "id": "MAT-001", "name": "Żywica epoksydowa", "unit": "kg", "stock": 240, "threshold": 50 },
+    { "id": "MAT-002", "name": "Mata szklana 450g", "unit": "m²", "stock": 180, "threshold": 30 },
+    { "id": "MAT-003", "name": "Żelkot biały", "unit": "kg", "stock": 85, "threshold": 20 },
+    { "id": "MAT-004", "name": "Żelkot kremowy", "unit": "kg", "stock": 65, "threshold": 15 },
+    { "id": "MAT-005", "name": "Profil aluminiowy", "unit": "m", "stock": 320, "threshold": 50 },
+    { "id": "MAT-006", "name": "Śruby nierdzewne M6", "unit": "szt", "stock": 1250, "threshold": 200 },
+    { "id": "MAT-007", "name": "Koło sterowe", "unit": "szt", "stock": 8, "threshold": 5 },
+    { "id": "MAT-008", "name": "Linka sterowa 3m", "unit": "szt", "stock": 12, "threshold": 6 }
+  ],
+  "workCenters": [
+    { "id": "WC-001", "name": "Stanowisko formowania", "capacity": 2, "status": "active" },
+    { "id": "WC-002", "name": "Stanowisko montażu", "capacity": 3, "status": "active" },
+    { "id": "WC-003", "name": "Stanowisko mechaniczne", "capacity": 2, "status": "active" },
+    { "id": "WC-004", "name": "Stanowisko wykończeniowe", "capacity": 2, "status": "active" },
+    { "id": "WC-005", "name": "Stanowisko kontroli jakości", "capacity": 1, "status": "active" }
+  ],
+  "boms": "/product-boms.json",
+  "routes": "/production-routes.json",
+  "sales_orders": "/sales-orders.json",
+  "purchase_orders": "/purchase-orders.json",
+  "production_orders": "/production-orders.json"
 }
