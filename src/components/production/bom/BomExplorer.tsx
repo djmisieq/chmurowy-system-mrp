@@ -6,6 +6,7 @@ import { SearchIcon, RefreshCw, Download, Eye, Table, FileText, Edit, Plus, Side
 import BomTreeView from './BomTreeView';
 import BomItemDetail from './BomItemDetail';
 import BomItemAddModal from './BomItemAddModal';
+import BomItemEditModal from './BomItemEditModal';
 import { ProductBom, BomItem } from '@/types/bom.types';
 import { useRouter } from 'next/navigation';
 
@@ -24,8 +25,10 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
   const [selectedItem, setSelectedItem] = useState<BomItem | null>(null);
   const [showSidebar, setShowSidebar] = useState(true);
   
-  // State for item add modal
+  // State for modals
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [itemToEdit, setItemToEdit] = useState<BomItem | null>(null);
 
   useEffect(() => {
     const fetchBoms = async () => {
@@ -116,6 +119,11 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
     setShowAddModal(true);
   };
 
+  const handleEditItem = (item: BomItem) => {
+    setItemToEdit(item);
+    setShowEditModal(true);
+  };
+
   const handleSaveNewItem = (newItem: Omit<BomItem, 'id'>) => {
     if (!selectedBom) return;
     
@@ -186,6 +194,113 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
         bom.id === updatedBom.id ? updatedBom : bom
       ));
     }
+  };
+
+  const handleSaveEditedItem = (editedItem: BomItem) => {
+    if (!selectedBom || !itemToEdit) return;
+    
+    // Deep clone the BOM to avoid directly mutating state
+    const updatedBom = JSON.parse(JSON.stringify(selectedBom)) as ProductBom;
+    
+    // Function to recursively find and update the item
+    const updateItem = (items: BomItem[]): boolean => {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].id === editedItem.id) {
+          // Found the item, update it (preserve children)
+          const children = items[i].children;
+          items[i] = { ...editedItem };
+          if (children) {
+            items[i].children = children;
+          }
+          return true;
+        }
+        
+        // Recursively search in children
+        if (items[i].children && updateItem(items[i].children)) {
+          return true;
+        }
+      }
+      return false;
+    };
+    
+    // Check if it's the root item
+    if (updatedBom.rootItem.id === editedItem.id) {
+      const children = updatedBom.rootItem.children;
+      updatedBom.rootItem = { ...editedItem };
+      if (children) {
+        updatedBom.rootItem.children = children;
+      }
+    } else if (updatedBom.rootItem.children) {
+      updateItem(updatedBom.rootItem.children);
+    }
+    
+    // Update the BOM in state
+    setSelectedBom(updatedBom);
+    
+    // If the edited item is the currently selected item, update it
+    if (selectedItem && selectedItem.id === editedItem.id) {
+      setSelectedItem(editedItem);
+    }
+    
+    // Update in the boms array
+    setBoms(prevBoms => prevBoms.map(bom => 
+      bom.id === updatedBom.id ? updatedBom : bom
+    ));
+    
+    // Close the edit modal
+    setShowEditModal(false);
+    setItemToEdit(null);
+  };
+
+  const handleDeleteItem = (itemToDelete: BomItem) => {
+    if (!selectedBom) return;
+    
+    // Deep clone the BOM to avoid directly mutating state
+    const updatedBom = JSON.parse(JSON.stringify(selectedBom)) as ProductBom;
+    
+    // Function to recursively find and remove the item
+    const removeItem = (items: BomItem[]): BomItem[] => {
+      return items.filter(item => {
+        if (item.id === itemToDelete.id) {
+          return false; // Remove this item
+        }
+        
+        // If this item has children, recursively filter them
+        if (item.children && item.children.length > 0) {
+          item.children = removeItem(item.children);
+        }
+        
+        return true;
+      });
+    };
+    
+    // Check if it's the root item (can't delete root)
+    if (updatedBom.rootItem.id === itemToDelete.id) {
+      alert('Nie można usunąć głównego elementu struktury BOM.');
+      return;
+    }
+    
+    // Process children of root
+    if (updatedBom.rootItem.children) {
+      updatedBom.rootItem.children = removeItem(updatedBom.rootItem.children);
+    }
+    
+    // Update the BOM in state
+    setSelectedBom(updatedBom);
+    
+    // If the deleted item is the currently selected item, deselect it
+    if (selectedItem && selectedItem.id === itemToDelete.id) {
+      setSelectedItem(null);
+    }
+    
+    // Update in the boms array
+    setBoms(prevBoms => prevBoms.map(bom => 
+      bom.id === updatedBom.id ? updatedBom : bom
+    ));
+    
+    // Close the edit modal
+    setShowEditModal(false);
+    setItemToEdit(null);
   };
 
   const renderContent = () => {
@@ -403,10 +518,7 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
             <BomItemDetail 
               item={selectedItem} 
               onClose={() => setSelectedItem(null)} 
-              onEdit={(item) => {
-                // W przyszłości tutaj będzie edycja istniejącego elementu
-                alert(`Edycja elementu "${item.itemName}" zostanie dodana w przyszłej wersji.`);
-              }}
+              onEdit={handleEditItem}
             />
           </div>
         )}
@@ -418,6 +530,18 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
         onClose={() => setShowAddModal(false)}
         onSave={handleSaveNewItem}
         parentItem={selectedItem}
+      />
+
+      {/* Edit item modal */}
+      <BomItemEditModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setItemToEdit(null);
+        }}
+        onSave={handleSaveEditedItem}
+        onDelete={handleDeleteItem}
+        item={itemToEdit}
       />
     </div>
   );
