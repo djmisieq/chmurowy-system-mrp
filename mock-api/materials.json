@@ -1,0 +1,137 @@
+[
+  {
+    "id": "MAT-001",
+    "name": "Żywica epoksydowa",
+    "unit": "kg",
+    "price": 50.0,
+    "onHand": 240,
+    "minimum": 50,
+    "category": "Materiały produkcyjne"
+  },
+  {
+    "id": "MAT-002",
+    "name": "Mata szklana 450g",
+    "unit": "m²",
+    "price": 20.0,
+    "onHand": 180,
+    "minimum": 30,
+    "category": "Materiały produkcyjne"
+  },
+  {
+    "id": "MAT-003",
+    "name": "Żelkot biały",
+    "unit": "kg",
+    "price": 75.0,
+    "onHand": 85,
+    "minimum": 20,
+    "category": "Materiały produkcyjne"
+  },
+  {
+    "id": "MAT-004",
+    "name": "Żelkot kremowy",
+    "unit": "kg",
+    "price": 75.0,
+    "onHand": 65,
+    "minimum": 15,
+    "category": "Materiały produkcyjne"
+  },
+  {
+    "id": "MAT-005",
+    "name": "Profil aluminiowy",
+    "unit": "m",
+    "price": 25.0,
+    "onHand": 320,
+    "minimum": 50,
+    "category": "Elementy konstrukcyjne"
+  },
+  {
+    "id": "MAT-006",
+    "name": "Śruby nierdzewne M6",
+    "unit": "szt",
+    "price": 0.5,
+    "onHand": 1250,
+    "minimum": 200,
+    "category": "Elementy złączne"
+  },
+  {
+    "id": "MAT-007",
+    "name": "Koło sterowe",
+    "unit": "szt",
+    "price": 350.0,
+    "onHand": 8,
+    "minimum": 5,
+    "category": "Wyposażenie"
+  },
+  {
+    "id": "MAT-008",
+    "name": "Linka sterowa 3m",
+    "unit": "szt",
+    "price": 120.0,
+    "onHand": 12,
+    "minimum": 6,
+    "category": "Wyposażenie"
+  },
+  {
+    "id": "MAT-009",
+    "name": "Siedzisko kapitańskie",
+    "unit": "szt",
+    "price": 650.0,
+    "onHand": 5,
+    "minimum": 2,
+    "category": "Wyposażenie"
+  },
+  {
+    "id": "MAT-010",
+    "name": "Zbiornik paliwa 100L",
+    "unit": "szt",
+    "price": 450.0,
+    "onHand": 3,
+    "minimum": 4,
+    "category": "Wyposażenie"
+  },
+  {
+    "id": "MAT-011",
+    "name": "Silnik zaburtowy 40HP",
+    "unit": "szt",
+    "price": 15000.0,
+    "onHand": 2,
+    "minimum": 1,
+    "category": "Napęd"
+  },
+  {
+    "id": "MAT-012",
+    "name": "Silnik zaburtowy 60HP",
+    "unit": "szt",
+    "price": 22000.0,
+    "onHand": 1,
+    "minimum": 1,
+    "category": "Napęd"
+  },
+  {
+    "id": "MAT-013",
+    "name": "Zestaw tapicerski Standard",
+    "unit": "kpl",
+    "price": 1200.0,
+    "onHand": 4,
+    "minimum": 2,
+    "category": "Wyposażenie"
+  },
+  {
+    "id": "MAT-014",
+    "name": "Zestaw tapicerski Premium",
+    "unit": "kpl",
+    "price": 2500.0,
+    "onHand": 2,
+    "minimum": 1,
+    "category": "Wyposażenie"
+  },
+  {
+    "id": "MAT-015",
+    "name": "Panel kontrolny",
+    "unit": "szt",
+    "price": 850.0,
+    "onHand": 6,
+    "minimum": 3,
+    "category": "Elektronika"
+  }
+]
