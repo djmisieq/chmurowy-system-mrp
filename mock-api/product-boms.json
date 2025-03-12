@@ -1,0 +1,304 @@
+[
+  {
+    "id": "BOM-001",
+    "name": "Motorówka Sport 175",
+    "description": "Sportowa łódź motorowa o długości 175 cm",
+    "productId": "PROD-001",
+    "version": "1.0",
+    "status": "active",
+    "effectiveDate": "2025-01-01T00:00:00Z",
+    "createdBy": "system",
+    "createdAt": "2025-01-01T00:00:00Z",
+    "rootItem": {
+      "id": "ITEM-001",
+      "itemId": "PROD-001",
+      "itemName": "Motorówka Sport 175",
+      "itemType": "product",
+      "quantity": 1,
+      "unit": "szt",
+      "description": "Kompletna łódź motorowa",
+      "children": [
+        {
+          "id": "ITEM-002",
+          "itemId": "ASM-001",
+          "itemName": "Kadłub z pokładem",
+          "itemType": "assembly",
+          "quantity": 1,
+          "unit": "szt",
+          "children": [
+            {
+              "id": "ITEM-003",
+              "itemId": "COMP-001",
+              "itemName": "Kadłub główny",
+              "itemType": "component",
+              "quantity": 1,
+              "unit": "szt",
+              "children": [
+                {
+                  "id": "ITEM-004",
+                  "itemId": "MAT-001",
+                  "itemName": "Żywica epoksydowa",
+                  "itemType": "material",
+                  "quantity": 25,
+                  "unit": "kg"
+                },
+                {
+                  "id": "ITEM-005",
+                  "itemId": "MAT-002",
+                  "itemName": "Mata szklana 450g",
+                  "itemType": "material",
+                  "quantity": 15,
+                  "unit": "m²"
+                },
+                {
+                  "id": "ITEM-006",
+                  "itemId": "MAT-003",
+                  "itemName": "Żelkot biały",
+                  "itemType": "material",
+                  "quantity": 5,
+                  "unit": "kg"
+                }
+              ]
+            },
+            {
+              "id": "ITEM-007",
+              "itemId": "COMP-002",
+              "itemName": "Pokład",
+              "itemType": "component",
+              "quantity": 1,
+              "unit": "szt",
+              "children": [
+                {
+                  "id": "ITEM-008",
+                  "itemId": "MAT-001",
+                  "itemName": "Żywica epoksydowa",
+                  "itemType": "material",
+                  "quantity": 12,
+                  "unit": "kg"
+                },
+                {
+                  "id": "ITEM-009",
+                  "itemId": "MAT-002",
+                  "itemName": "Mata szklana 450g",
+                  "itemType": "material",
+                  "quantity": 8,
+                  "unit": "m²"
+                },
+                {
+                  "id": "ITEM-010",
+                  "itemId": "MAT-004",
+                  "itemName": "Żelkot kremowy",
+                  "itemType": "material",
+                  "quantity": 3,
+                  "unit": "kg"
+                }
+              ]
+            },
+            {
+              "id": "ITEM-011",
+              "itemId": "COMP-003",
+              "itemName": "Wzmocnienia kadłuba",
+              "itemType": "component",
+              "quantity": 1,
+              "unit": "kpl",
+              "children": [
+                {
+                  "id": "ITEM-012",
+                  "itemId": "MAT-005",
+                  "itemName": "Profil aluminiowy",
+                  "itemType": "material",
+                  "quantity": 12,
+                  "unit": "m"
+                },
+                {
+                  "id": "ITEM-013",
+                  "itemId": "MAT-006",
+                  "itemName": "Śruby nierdzewne M6",
+                  "itemType": "material",
+                  "quantity": 64,
+                  "unit": "szt"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ITEM-014",
+          "itemId": "ASM-002",
+          "itemName": "Układ napędowy",
+          "itemType": "assembly",
+          "quantity": 1,
+          "unit": "kpl",
+          "children": [
+            {
+              "id": "ITEM-015",
+              "itemId": "COMP-004",
+              "itemName": "Silnik zaburtowy 100KM",
+              "itemType": "component",
+              "quantity": 1,
+              "unit": "szt"
+            },
+            {
+              "id": "ITEM-016",
+              "itemId": "COMP-005",
+              "itemName": "Układ sterowania",
+              "itemType": "component",
+              "quantity": 1,
+              "unit": "kpl",
+              "children": [
+                {
+                  "id": "ITEM-017",
+                  "itemId": "MAT-007",
+                  "itemName": "Koło sterowe",
+                  "itemType": "material",
+                  "quantity": 1,
+                  "unit": "szt"
+                },
+                {
+                  "id": "ITEM-018",
+                  "itemId": "MAT-008",
+                  "itemName": "Linka sterowa 3m",
+                  "itemType": "material",
+                  "quantity": 1,
+                  "unit": "szt"
+                }
+              ]
+            },
+            {
+              "id": "ITEM-019",
+              "itemId": "COMP-006",
+              "itemName": "Zbiornik paliwa",
+              "itemType": "component",
+              "quantity": 1,
+              "unit": "szt"
+            }
+          ]
+        },
+        {
+          "id": "ITEM-020",
+          "itemId": "ASM-003",
+          "itemName": "Wyposażenie",
+          "itemType": "assembly",
+          "quantity": 1,
+          "unit": "kpl",
+          "children": [
+            {
+              "id": "ITEM-021",
+              "itemId": "COMP-007",
+              "itemName": "Fotele przednie",
+              "itemType": "component",
+              "quantity": 2,
+              "unit": "szt"
+            },
+            {
+              "id": "ITEM-022",
+              "itemId": "COMP-008",
+              "itemName": "Kanapa tylna",
+              "itemType": "component",
+              "quantity": 1,
+              "unit": "szt"
+            },
+            {
+              "id": "ITEM-023",
+              "itemId": "COMP-009",
+              "itemName": "Panel sterowania",
+              "itemType": "component",
+              "quantity": 1,
+              "unit": "szt"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "BOM-002",
+    "name": "Motorówka Cruiser 230",
+    "description": "Łódź motorowa typu cruiser o długości 230 cm",
+    "productId": "PROD-002",
+    "version": "1.0",
+    "status": "active",
+    "effectiveDate": "2025-01-01T00:00:00Z",
+    "createdBy": "system",
+    "createdAt": "2025-01-01T00:00:00Z",
+    "rootItem": {
+      "id": "ITEM-101",
+      "itemId": "PROD-002",
+      "itemName": "Motorówka Cruiser 230",
+      "itemType": "product",
+      "quantity": 1,
+      "unit": "szt",
+      "description": "Kompletna łódź motorowa typu cruiser",
+      "children": [
+        {
+          "id": "ITEM-102",
+          "itemId": "ASM-101",
+          "itemName": "Kadłub z nadbudówką",
+          "itemType": "assembly",
+          "quantity": 1,
+          "unit": "szt",
+          "children": [
+            {
+              "id": "ITEM-103",
+              "itemId": "COMP-101",
+              "itemName": "Kadłub wzmocniony",
+              "itemType": "component",
+              "quantity": 1,
+              "unit": "szt"
+            },
+            {
+              "id": "ITEM-104",
+              "itemId": "COMP-102",
+              "itemName": "Kabina nawigacyjna",
+              "itemType": "component",
+              "quantity": 1,
+              "unit": "szt"
+            }
+          ]
+        },
+        {
+          "id": "ITEM-105",
+          "itemId": "ASM-102",
+          "itemName": "Układ napędowy rozszerzony",
+          "itemType": "assembly",
+          "quantity": 1,
+          "unit": "kpl",
+          "children": [
+            {
+              "id": "ITEM-106",
+              "itemId": "COMP-103",
+              "itemName": "Silnik stacjonarny 150KM",
+              "itemType": "component",
+              "quantity": 1,
+              "unit": "szt"
+            },
+            {
+              "id": "ITEM-107",
+              "itemId": "COMP-104",
+              "itemName": "Przekładnia napędowa",
+              "itemType": "component",
+              "quantity": 1,
+              "unit": "szt"
+            },
+            {
+              "id": "ITEM-108",
+              "itemId": "COMP-105",
+              "itemName": "Wał napędowy",
+              "itemType": "component",
+              "quantity": 1,
+              "unit": "szt"
+            },
+            {
+              "id": "ITEM-109",
+              "itemId": "COMP-106",
+              "itemName": "Śruba napędowa",
+              "itemType": "component",
+              "quantity": 1,
+              "unit": "szt"
+            }
+          ]
+        }
+      ]
+    }
+  }
+]
