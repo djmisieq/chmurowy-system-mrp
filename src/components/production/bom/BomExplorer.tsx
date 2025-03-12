@@ -2,15 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { SearchIcon, RefreshCw, Download, Eye, Table, FileText } from 'lucide-react';
+import { SearchIcon, RefreshCw, Download, Eye, Table, FileText, Edit, Plus } from 'lucide-react';
 import BomTreeView from './BomTreeView';
 import { ProductBom } from '@/types/bom.types';
+import { useRouter } from 'next/navigation';
 
 interface BomExplorerProps {
   initialBomId?: string;
 }
 
 const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [boms, setBoms] = useState<ProductBom[]>([]);
   const [selectedBomId, setSelectedBomId] = useState<string | undefined>(initialBomId);
@@ -80,6 +82,16 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
+  };
+
+  const handleCreateNew = () => {
+    router.push('/production/bom/new');
+  };
+
+  const handleEdit = () => {
+    if (selectedBomId) {
+      router.push(`/production/bom/edit/${selectedBomId}`);
+    }
   };
 
   const renderContent = () => {
@@ -163,6 +175,21 @@ const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
       <div className="border-b p-4 flex justify-between items-center">
         <h2 className="text-xl font-semibold">Struktura produktów (BOM)</h2>
         <div className="flex space-x-2">
+          <button
+            onClick={handleCreateNew}
+            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded"
+            title="Nowa struktura BOM"
+          >
+            <Plus size={20} />
+          </button>
+          <button
+            onClick={handleEdit}
+            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!selectedBom}
+            title="Edytuj strukturę BOM"
+          >
+            <Edit size={20} />
+          </button>
           <button 
             onClick={handleRefresh}
             className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded"
