@@ -1,101 +1,90 @@
-// Types for manufacturing routes (process flows)
+// Types for Production Routes (marszruty technologiczne)
 
 export interface RouteOperation {
   id: string;
   name: string;
-  description: string;
-  workCenter: string;
-  workCenterName?: string;
-  setupTime: number; // minutes
-  processingTime: number; // minutes per unit
-  waitTime?: number; // minutes
-  moveTime?: number; // minutes
-  laborSkill?: string;
-  laborCount?: number;
-  instructions?: string;
-  tools?: OperationTool[];
-  predecessors?: string[]; // IDs of operations that must be completed before this
-  subOperations?: RouteOperation[]; // For hierarchical operations
-  status?: 'pending' | 'in-progress' | 'completed';
-  level?: number; // For flattened view
-  resourceRequirements?: ResourceRequirement[];
-  documents?: OperationDocument[];
-  qualityChecks?: QualityCheck[];
+  description?: string;
+  workCenterId: string;
+  workCenterName: string;
+  setupTime: number; // Setup time in minutes
+  operationTime: number; // Operation time in minutes per unit
+  waitTime?: number; // Wait time in minutes
+  moveTime?: number; // Move time to next operation in minutes
+  requiredSkills?: string[]; // Required skills for the operation
+  qualityCheckpoints?: QualityCheckpoint[];
+  predecessorOperations?: string[]; // IDs of operations that must be completed before this one
+  status?: 'active' | 'draft' | 'obsolete';
+  resources?: OperationResource[]; // Resources needed for this operation
+  documents?: OperationDocument[]; // Technical documentation
+  subOperations?: RouteOperation[]; // Sub-operations if any
+  materialInputs?: MaterialInput[]; // Materials consumed during this operation
 }
 
-export interface ResourceRequirement {
+export interface QualityCheckpoint {
+  id: string;
+  name: string;
+  description?: string;
+  measurementUnit?: string;
+  minValue?: number;
+  maxValue?: number;
+  targetValue?: number;
+  checkType: 'visual' | 'measurement' | 'test' | 'other';
+}
+
+export interface OperationResource {
+  id: string;
   resourceId: string;
   resourceName: string;
-  resourceType: 'machine' | 'tool' | 'labor' | 'space';
+  resourceType: 'machine' | 'tool' | 'personnel' | 'fixture' | 'other';
   quantity: number;
-  unitOfMeasure: string;
-  required: boolean; // Is this resource absolutely required?
-  alternatives?: string[]; // IDs of alternative resources
-}
-
-export interface OperationTool {
-  toolId: string;
-  toolName: string;
-  quantity: number;
-  setupTime?: number; // minutes
-  notes?: string;
+  unit: string;
+  requiredTime?: number; // Time in minutes this resource is needed
 }
 
 export interface OperationDocument {
   id: string;
   name: string;
-  documentType: 'instruction' | 'drawing' | 'checklist' | 'standard';
-  url: string;
+  documentType: 'drawing' | 'instruction' | 'safety' | 'quality' | 'other';
+  url?: string;
   version?: string;
 }
 
-export interface QualityCheck {
+export interface MaterialInput {
   id: string;
-  name: string;
-  description: string;
-  checkType: 'visual' | 'measurement' | 'test';
-  targetValue?: number;
-  tolerance?: number;
-  unitOfMeasure?: string;
-  required: boolean;
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  unit: string;
+  consumptionType: 'per-unit' | 'per-batch' | 'fixed';
+  scrapFactor?: number; // Expected scrap as a percentage
 }
 
-// Complete production route definition
+// The main production route
 export interface ProductionRoute {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   productId: string;
-  productName?: string;
+  productName: string;
   version: string;
   status: 'draft' | 'approved' | 'active' | 'obsolete';
   effectiveDate: Date;
   obsoleteDate?: Date;
   operations: RouteOperation[];
-  totalSetupTime?: number; // minutes (calculated)
-  totalProcessingTime?: number; // minutes per unit (calculated)
+  batchSize?: number; // Default batch size
+  notes?: string;
   createdBy: string;
   createdAt: Date;
   modifiedBy?: string;
   modifiedAt?: Date;
   approvedBy?: string;
   approvedAt?: Date;
-  notes?: string;
 }
 
-// For flattened view of routes
-export interface FlatRouteOperation extends Omit<RouteOperation, 'subOperations'> {
-  parentId?: string;
-  indent: number;
-  sequenceNumber: number;
-}
-
-// Operation-BOM relationships
-export interface OperationBomRelationship {
-  operationId: string;
-  bomItemId: string;
-  relationshipType: 'consumes' | 'produces' | 'transforms';
-  quantity: number;
-  unitOfMeasure: string;
-  scrapPercentage?: number;
+// For comparing routes between versions
+export interface RouteRevisionChange {
+  changeType: 'add' | 'remove' | 'modify';
+  operation: RouteOperation;
+  previousValue?: any;
+  newValue?: any;
 }
