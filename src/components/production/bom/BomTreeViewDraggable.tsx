@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ChevronRight, ChevronDown, Package, Layers, Box, HardDrive, GripVertical, AlertCircle } from 'lucide-react';
 import { BomItem } from '@/types/bom.types';
 
@@ -16,6 +16,7 @@ interface BomTreeViewDraggableProps {
 interface DragInfo {
   itemId: string;
   level: number;
+  itemType: string;
 }
 
 const BomTreeViewDraggable: React.FC<BomTreeViewDraggableProps> = ({ 
@@ -28,18 +29,29 @@ const BomTreeViewDraggable: React.FC<BomTreeViewDraggableProps> = ({
 }) => {
   const [expanded, setExpanded] = useState(expandedByDefault || level === 0);
   const [dropTarget, setDropTarget] = useState<'none' | 'inside' | 'before' | 'after'>('none');
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   
   const hasChildren = item.children && item.children.length > 0;
   const isSelected = selectedItemId === item.id;
   const nodeRef = useRef<HTMLDivElement>(null);
   
+  // Auto-expand when children are present and item is selected
+  useEffect(() => {
+    if (isSelected && hasChildren && !expanded) {
+      setExpanded(true);
+    }
+  }, [isSelected, hasChildren, expanded]);
+  
   // Handle drag and drop
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     e.stopPropagation();
+    setIsDragging(true);
     
     const dragInfo: DragInfo = {
       itemId: item.id,
-      level: level
+      level,
+      itemType: item.itemType
     };
     
     e.dataTransfer.setData('application/json', JSON.stringify(dragInfo));
@@ -67,22 +79,23 @@ const BomTreeViewDraggable: React.FC<BomTreeViewDraggableProps> = ({
     }, 0);
   };
   
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    setDragOver(false);
+    setDropTarget('none');
+  };
+  
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     
+    if (!dragOver) {
+      setDragOver(true);
+    }
+    
+    // Get drag info - for security reasons, this won't work during dragover in modern browsers
+    // We'll determine valid drop areas using the dragenter event data
     try {
-      const dragInfoStr = e.dataTransfer.getData('application/json');
-      if (!dragInfoStr) return; // No valid data
-      
-      const dragInfo: DragInfo = JSON.parse(dragInfoStr);
-      
-      // Don't allow dragging onto self
-      if (dragInfo.itemId === item.id) {
-        setDropTarget('none');
-        return;
-      }
-      
       // Determine drop position based on mouse position
       if (nodeRef.current) {
         const rect = nodeRef.current.getBoundingClientRect();
@@ -91,12 +104,18 @@ const BomTreeViewDraggable: React.FC<BomTreeViewDraggableProps> = ({
         const topThird = rect.top + rect.height * 0.33;
         const bottomThird = rect.bottom - rect.height * 0.33;
         
+        let newDropTarget: 'none' | 'inside' | 'before' | 'after' = 'none';
+        
         if (mouseY < topThird) {
-          setDropTarget('before');
+          newDropTarget = 'before';
         } else if (mouseY > bottomThird) {
-          setDropTarget('after');
+          newDropTarget = 'after';
         } else {
-          setDropTarget('inside');
+          newDropTarget = 'inside';
+        }
+        
+        if (dropTarget !== newDropTarget) {
+          setDropTarget(newDropTarget);
         }
       }
       
@@ -107,15 +126,68 @@ const BomTreeViewDraggable: React.FC<BomTreeViewDraggableProps> = ({
     }
   };
   
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // During dragenter, dataTransfer is accessible
+    try {
+      const dragInfoStr = e.dataTransfer.getData('application/json');
+      
+      // If we can't get drag info, we're likely getting a dragenter from a child element
+      // In this case, show the default drop target
+      if (!dragInfoStr) {
+        setDragOver(true);
+        return;
+      }
+      
+      const dragInfo: DragInfo = JSON.parse(dragInfoStr);
+      
+      // Don't allow dragging onto self
+      if (dragInfo.itemId === item.id) {
+        setDropTarget('none');
+        setDragOver(false);
+        return;
+      }
+      
+      setDragOver(true);
+    } catch (error) {
+      // If error, just show default drag effect
+      setDragOver(true);
+    }
+  };
+  
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Check if we're actually leaving or just entering a child element
+    const rect = nodeRef.current?.getBoundingClientRect();
+    if (rect) {
+      const { clientX, clientY } = e;
+      
+      // If the mouse is still within the node's boundaries, don't clear the drag state
+      // This prevents flickering when dragging over child elements
+      if (
+        clientX >= rect.left &&
+        clientX <= rect.right &&
+        clientY >= rect.top &&
+        clientY <= rect.bottom
+      ) {
+        return;
+      }
+    }
+    
+    setDragOver(false);
     setDropTarget('none');
   };
   
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    setDragOver(false);
+    setDropTarget('none');
     
     try {
       const dragInfoStr = e.dataTransfer.getData('application/json');
@@ -125,8 +197,12 @@ const BomTreeViewDraggable: React.FC<BomTreeViewDraggableProps> = ({
       
       // Don't allow dragging onto self
       if (dragInfo.itemId === item.id) {
-        setDropTarget('none');
         return;
+      }
+      
+      // Auto expand when dropping inside
+      if (dropTarget === 'inside' && !expanded && hasChildren) {
+        setExpanded(true);
       }
       
       // Call the onDrop handler if provided
@@ -136,9 +212,6 @@ const BomTreeViewDraggable: React.FC<BomTreeViewDraggableProps> = ({
     } catch (error) {
       console.error('Error handling drop:', error);
     }
-    
-    // Reset drop target
-    setDropTarget('none');
   };
   
   const getItemIcon = (itemType: string) => {
@@ -187,6 +260,8 @@ const BomTreeViewDraggable: React.FC<BomTreeViewDraggableProps> = ({
   };
 
   const getDropTargetStyles = () => {
+    if (!dragOver) return '';
+    
     switch (dropTarget) {
       case 'before':
         return 'border-t-2 border-primary-500';
@@ -198,6 +273,13 @@ const BomTreeViewDraggable: React.FC<BomTreeViewDraggableProps> = ({
         return '';
     }
   };
+  
+  const getDragStyles = () => {
+    if (isDragging) {
+      return 'opacity-50 border border-dashed border-gray-400';
+    }
+    return '';
+  };
 
   const handleItemClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -206,29 +288,41 @@ const BomTreeViewDraggable: React.FC<BomTreeViewDraggableProps> = ({
     }
   };
   
+  const handleToggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpanded(!expanded);
+  };
+  
+  // Animation classes for smooth transitions
+  const childrenClasses = `overflow-hidden transition-all duration-200 ${
+    expanded ? 'max-h-screen' : 'max-h-0'
+  }`;
+  
   return (
     <div className="mb-1">
       <div 
         ref={nodeRef}
-        className={`flex items-center py-1 px-2 rounded hover:bg-gray-100 ${level > 0 ? 'ml-6' : ''} ${
+        className={`flex items-center py-1 px-2 rounded hover:bg-gray-100 transition-all duration-200 ${
+          level > 0 ? 'ml-6' : ''
+        } ${
           isSelected ? 'bg-blue-50 border border-blue-200' : ''
-        } ${getDropTargetStyles()} cursor-pointer`}
+        } ${getDropTargetStyles()} ${getDragStyles()} cursor-pointer`}
         style={{ paddingLeft: `${level * 8 + 8}px` }}
         onClick={handleItemClick}
         draggable={true}
         onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
         onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
         <div className="mr-1 w-5">
           {hasChildren && (
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setExpanded(!expanded);
-              }}
-              className="hover:bg-gray-200 rounded p-1"
+              onClick={handleToggleExpand}
+              className="hover:bg-gray-200 rounded p-1 transition-colors duration-200"
+              aria-label={expanded ? "Zwiń" : "Rozwiń"}
             >
               {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
@@ -239,7 +333,7 @@ const BomTreeViewDraggable: React.FC<BomTreeViewDraggableProps> = ({
           {getItemIcon(item.itemType)}
         </div>
         
-        <div className="flex-grow">
+        <div className="flex-grow truncate">
           <span className={getItemClass(item.itemType)}>
             {item.itemName}
           </span>
@@ -247,19 +341,21 @@ const BomTreeViewDraggable: React.FC<BomTreeViewDraggableProps> = ({
             ({item.quantity} {item.unit})
           </span>
           {item.description && (
-            <span className="text-sm text-gray-400 ml-2">
-              {item.description}
+            <span className="text-sm text-gray-400 ml-2 hidden sm:inline">
+              {item.description.length > 30
+                ? `${item.description.slice(0, 30)}...`
+                : item.description}
             </span>
           )}
         </div>
         
         <div className="flex items-center">
-          <div className="text-xs text-gray-500 mr-2">
+          <div className="text-xs text-gray-500 mr-2 hidden sm:block">
             ID: {item.itemId}
           </div>
           
           <div 
-            className="p-1 cursor-grab text-gray-400 hover:text-gray-600"
+            className="p-1 cursor-grab text-gray-400 hover:text-gray-600 touch-manipulation"
             title="Przeciągnij, aby zmienić pozycję"
           >
             <GripVertical size={16} />
@@ -267,20 +363,27 @@ const BomTreeViewDraggable: React.FC<BomTreeViewDraggableProps> = ({
         </div>
       </div>
       
-      {expanded && hasChildren && (
-        <div className="border-l border-gray-200 ml-3">
-          {item.children!.map((child, index) => (
-            <BomTreeViewDraggable 
-              key={child.id || index}
-              item={child}
-              level={level + 1}
-              expandedByDefault={level === 0}
-              onItemSelect={onItemSelect}
-              selectedItemId={selectedItemId}
-              onDrop={onDrop}
-            />
-          ))}
-        </div>
+      <div className={childrenClasses}>
+        {expanded && hasChildren && (
+          <div className="border-l border-gray-200 ml-3">
+            {item.children!.map((child, index) => (
+              <BomTreeViewDraggable 
+                key={child.id || index}
+                item={child}
+                level={level + 1}
+                expandedByDefault={level === 0}
+                onItemSelect={onItemSelect}
+                selectedItemId={selectedItemId}
+                onDrop={onDrop}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+      
+      {/* Drop indicator overlay only shown when dragging */}
+      {dragOver && dropTarget === 'inside' && (
+        <div className="absolute inset-0 bg-primary-100 bg-opacity-20 pointer-events-none" />
       )}
     </div>
   );
