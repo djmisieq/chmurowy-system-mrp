@@ -1,287 +1,447 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
-import { ChevronRight, ChevronDown, Package, Layers, Box, HardDrive, GripVertical, AlertCircle } from 'lucide-react';
-import { BomItem } from '@/types/bom.types';
+import React, { useState, useRef, useEffect } from 'react';
+import { ChevronRight, ChevronDown, Grip, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-interface BomTreeViewDraggableProps {
-  item: BomItem;
-  level?: number;
-  expandedByDefault?: boolean;
-  onItemSelect?: (item: BomItem) => void;
-  selectedItemId?: string;
-  onDrop?: (draggedItemId: string, targetItemId: string, position: 'inside' | 'before' | 'after') => void;
+// Typy dla drag and drop operacji
+interface DragItem {
+  id: string;
+  type: string;
+  parentId: string | null;
+  index: number;
+  depth: number;
 }
 
-interface DragInfo {
-  itemId: string;
-  level: number;
+interface DropResult {
+  dropEffect: string;
+  didDrop: boolean;
 }
 
-const BomTreeViewDraggable: React.FC<BomTreeViewDraggableProps> = ({ 
-  item, 
-  level = 0,
-  expandedByDefault = false,
-  onItemSelect,
-  selectedItemId,
-  onDrop
+interface BomItemType {
+  id: string;
+  name: string;
+  type: string;
+  quantity: number;
+  unit: string;
+  parentId: string | null;
+  children?: BomItemType[];
+  [key: string]: any;
+}
+
+interface TreeNodeProps {
+  item: BomItemType;
+  depth: number;
+  index: number;
+  isExpanded: boolean;
+  isSelected: boolean;
+  onToggle: (id: string) => void;
+  onSelect: (id: string) => void;
+  parentId: string | null;
+  onDragStart: (item: DragItem) => void;
+  onDrop: (targetId: string, item: DragItem) => void;
+  isValidDropTarget: (sourceId: string, targetId: string) => boolean;
+  draggedItemId: string | null;
+}
+
+// Komponent pojedynczego węzła drzewa
+const TreeNode: React.FC<TreeNodeProps> = ({
+  item,
+  depth,
+  index,
+  isExpanded,
+  isSelected,
+  onToggle,
+  onSelect,
+  parentId,
+  onDragStart,
+  onDrop,
+  isValidDropTarget,
+  draggedItemId
 }) => {
-  const [expanded, setExpanded] = useState(expandedByDefault || level === 0);
-  const [dropTarget, setDropTarget] = useState<'none' | 'inside' | 'before' | 'after'>('none');
-  
-  const hasChildren = item.children && item.children.length > 0;
-  const isSelected = selectedItemId === item.id;
   const nodeRef = useRef<HTMLDivElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isDroppable, setIsDroppable] = useState(false);
   
-  // Handle drag and drop
+  // Efekt sprawdzający czy aktualny węzeł jest prawidłowym celem upuszczenia
+  useEffect(() => {
+    if (draggedItemId && draggedItemId !== item.id) {
+      setIsDroppable(isValidDropTarget(draggedItemId, item.id));
+    } else {
+      setIsDroppable(false);
+    }
+  }, [draggedItemId, item.id, isValidDropTarget]);
+
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     e.stopPropagation();
     
-    const dragInfo: DragInfo = {
-      itemId: item.id,
-      level: level
-    };
+    // Ustawienie obrazu przeciąganego elementu (ghost image)
+    if (nodeRef.current) {
+      const ghostElement = nodeRef.current.cloneNode(true) as HTMLDivElement;
+      ghostElement.style.position = 'absolute';
+      ghostElement.style.top = '-1000px';
+      ghostElement.style.opacity = '0.5';
+      document.body.appendChild(ghostElement);
+      e.dataTransfer.setDragImage(ghostElement, 0, 0);
+      setTimeout(() => {
+        document.body.removeChild(ghostElement);
+      }, 0);
+    }
     
-    e.dataTransfer.setData('application/json', JSON.stringify(dragInfo));
     e.dataTransfer.effectAllowed = 'move';
     
-    // Add a ghost image
-    const ghostElement = document.createElement('div');
-    ghostElement.classList.add('bg-white', 'p-2', 'border', 'rounded', 'shadow');
-    ghostElement.innerHTML = `
-      <div class="flex items-center">
-        <span class="mr-2">${getItemIconHtml(item.itemType)}</span>
-        <span>${item.itemName}</span>
-      </div>
-    `;
-    document.body.appendChild(ghostElement);
-    ghostElement.style.position = 'absolute';
-    ghostElement.style.top = '-1000px';
-    ghostElement.style.opacity = '0.8';
+    // Zapisanie danych o przeciąganym elemencie
+    const dragItem: DragItem = {
+      id: item.id,
+      type: item.type,
+      parentId,
+      index,
+      depth
+    };
     
-    e.dataTransfer.setDragImage(ghostElement, 0, 0);
-    
-    // Schedule removal of the ghost element
-    setTimeout(() => {
-      document.body.removeChild(ghostElement);
-    }, 0);
+    e.dataTransfer.setData('application/json', JSON.stringify(dragItem));
+    onDragStart(dragItem);
   };
-  
+
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     
-    try {
-      const dragInfoStr = e.dataTransfer.getData('application/json');
-      if (!dragInfoStr) return; // No valid data
-      
-      const dragInfo: DragInfo = JSON.parse(dragInfoStr);
-      
-      // Don't allow dragging onto self
-      if (dragInfo.itemId === item.id) {
-        setDropTarget('none');
-        return;
-      }
-      
-      // Determine drop position based on mouse position
-      if (nodeRef.current) {
-        const rect = nodeRef.current.getBoundingClientRect();
-        const mouseY = e.clientY;
-        
-        const topThird = rect.top + rect.height * 0.33;
-        const bottomThird = rect.bottom - rect.height * 0.33;
-        
-        if (mouseY < topThird) {
-          setDropTarget('before');
-        } else if (mouseY > bottomThird) {
-          setDropTarget('after');
-        } else {
-          setDropTarget('inside');
-        }
-      }
-      
+    // Zmiana wizualna gdy element jest nad potencjalnym celem upuszczenia
+    if (isDroppable && !isDragOver) {
+      setIsDragOver(true);
       e.dataTransfer.dropEffect = 'move';
-    } catch (error) {
-      console.error('Error handling drag over:', error);
-      setDropTarget('none');
+    } else if (!isDroppable && isDragOver) {
+      setIsDragOver(false);
+      e.dataTransfer.dropEffect = 'none';
     }
   };
-  
+
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setDropTarget('none');
+    setIsDragOver(false);
   };
-  
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsDragOver(false);
     
     try {
-      const dragInfoStr = e.dataTransfer.getData('application/json');
-      if (!dragInfoStr) return; // No valid data
-      
-      const dragInfo: DragInfo = JSON.parse(dragInfoStr);
-      
-      // Don't allow dragging onto self
-      if (dragInfo.itemId === item.id) {
-        setDropTarget('none');
-        return;
-      }
-      
-      // Call the onDrop handler if provided
-      if (onDrop && dropTarget !== 'none') {
-        onDrop(dragInfo.itemId, item.id, dropTarget as 'inside' | 'before' | 'after');
+      const data = JSON.parse(e.dataTransfer.getData('application/json')) as DragItem;
+      if (isDroppable) {
+        onDrop(item.id, data);
       }
     } catch (error) {
-      console.error('Error handling drop:', error);
-    }
-    
-    // Reset drop target
-    setDropTarget('none');
-  };
-  
-  const getItemIcon = (itemType: string) => {
-    switch (itemType) {
-      case 'product':
-        return <Layers className="text-blue-600" size={18} />;
-      case 'assembly':
-        return <Box className="text-green-600" size={18} />;
-      case 'component':
-        return <Package className="text-amber-600" size={18} />;
-      case 'material':
-        return <HardDrive className="text-gray-600" size={18} />;
-      default:
-        return <Package className="text-gray-600" size={18} />;
-    }
-  };
-  
-  const getItemIconHtml = (itemType: string) => {
-    switch (itemType) {
-      case 'product':
-        return '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="9" width="10" height="6"></rect><rect x="7" y="4" width="10" height="6"></rect><rect x="7" y="14" width="10" height="6"></rect></svg>';
-      case 'assembly':
-        return '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>';
-      case 'component':
-        return '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="8" x2="8" y2="8"></line><line x1="16" y1="16" x2="8" y2="16"></line><line x1="12" y1="12" x2="12" y2="12"></line></svg>';
-      case 'material':
-        return '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="2" y2="12"></line><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path><line x1="6" y1="16" x2="6.01" y2="16"></line><line x1="10" y1="16" x2="10.01" y2="16"></line></svg>';
-      default:
-        return '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="8" x2="8" y2="8"></line><line x1="16" y1="16" x2="8" y2="16"></line><line x1="12" y1="12" x2="12" y2="12"></line></svg>';
-    }
-  };
-  
-  const getItemClass = (itemType: string) => {
-    switch (itemType) {
-      case 'product':
-        return 'font-bold text-blue-700';
-      case 'assembly':
-        return 'font-semibold text-green-700';
-      case 'component':
-        return 'font-medium text-amber-700';
-      case 'material':
-        return 'text-gray-700';
-      default:
-        return 'text-gray-700';
+      console.error('Error parsing drag data:', error);
     }
   };
 
-  const getDropTargetStyles = () => {
-    switch (dropTarget) {
-      case 'before':
-        return 'border-t-2 border-primary-500';
-      case 'after':
-        return 'border-b-2 border-primary-500';
-      case 'inside':
-        return 'bg-primary-50';
-      default:
-        return '';
-    }
-  };
-
-  const handleItemClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onItemSelect) {
-      onItemSelect(item);
-    }
-  };
+  const hasChildren = item.children && item.children.length > 0;
   
+  // Określenie stylu w zależności od stanu
+  const nodeStyle = cn(
+    'flex items-center py-1 px-2 cursor-pointer rounded-md transition-colors',
+    {
+      'bg-primary-50': isSelected,
+      'border-primary-500 border-2': isDragOver && isDroppable,
+      'border-red-300 border-2': isDragOver && !isDroppable,
+      'opacity-50': draggedItemId === item.id,
+      'hover:bg-gray-100': draggedItemId !== item.id
+    }
+  );
+
   return (
-    <div className="mb-1">
-      <div 
+    <div className="select-none">
+      <div
         ref={nodeRef}
-        className={`flex items-center py-1 px-2 rounded hover:bg-gray-100 ${level > 0 ? 'ml-6' : ''} ${
-          isSelected ? 'bg-blue-50 border border-blue-200' : ''
-        } ${getDropTargetStyles()} cursor-pointer`}
-        style={{ paddingLeft: `${level * 8 + 8}px` }}
-        onClick={handleItemClick}
-        draggable={true}
+        className={nodeStyle}
+        style={{ paddingLeft: `${depth * 12 + 4}px` }}
+        onClick={() => onSelect(item.id)}
+        draggable
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        <div className="mr-1 w-5">
-          {hasChildren && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setExpanded(!expanded);
-              }}
-              className="hover:bg-gray-200 rounded p-1"
-            >
-              {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </button>
-          )}
+        <div className="mr-1">
+          <Grip className="h-4 w-4 text-gray-400 cursor-grab" />
         </div>
         
-        <div className="mr-2">
-          {getItemIcon(item.itemType)}
-        </div>
-        
-        <div className="flex-grow">
-          <span className={getItemClass(item.itemType)}>
-            {item.itemName}
-          </span>
-          <span className="text-sm text-gray-500 ml-2">
-            ({item.quantity} {item.unit})
-          </span>
-          {item.description && (
-            <span className="text-sm text-gray-400 ml-2">
-              {item.description}
-            </span>
+        <div className="mr-1" onClick={(e) => { e.stopPropagation(); onToggle(item.id); }}>
+          {hasChildren ? (
+            isExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )
+          ) : (
+            <div className="w-4" />
           )}
         </div>
         
         <div className="flex items-center">
-          <div className="text-xs text-gray-500 mr-2">
-            ID: {item.itemId}
-          </div>
+          {/* Ikona typu komponentu */}
+          <span className="font-medium">{item.name}</span>
+          <span className="ml-2 text-gray-500 text-sm">
+            {item.quantity} {item.unit}
+          </span>
           
-          <div 
-            className="p-1 cursor-grab text-gray-400 hover:text-gray-600"
-            title="Przeciągnij, aby zmienić pozycję"
-          >
-            <GripVertical size={16} />
-          </div>
+          {/* Wskaźniki walidacji */}
+          {isDragOver && !isDroppable && (
+            <AlertCircle className="ml-2 h-4 w-4 text-red-500" title="Nieprawidłowy cel" />
+          )}
         </div>
       </div>
       
-      {expanded && hasChildren && (
-        <div className="border-l border-gray-200 ml-3">
-          {item.children!.map((child, index) => (
-            <BomTreeViewDraggable 
-              key={child.id || index}
+      {/* Renderowanie dzieci jeśli węzeł jest rozwinięty */}
+      {isExpanded && hasChildren && (
+        <div className="ml-2">
+          {item.children?.map((child, childIndex) => (
+            <TreeNode
+              key={child.id}
               item={child}
-              level={level + 1}
-              expandedByDefault={level === 0}
-              onItemSelect={onItemSelect}
-              selectedItemId={selectedItemId}
+              depth={depth + 1}
+              index={childIndex}
+              isExpanded={isExpanded}
+              isSelected={false}
+              onToggle={onToggle}
+              onSelect={onSelect}
+              parentId={item.id}
+              onDragStart={onDragStart}
               onDrop={onDrop}
+              isValidDropTarget={isValidDropTarget}
+              draggedItemId={draggedItemId}
             />
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+interface BomTreeViewDraggableProps {
+  items: BomItemType[];
+  onItemSelected: (item: BomItemType | null) => void;
+  onItemsReordered: (newItems: BomItemType[]) => void;
+}
+
+// Główny komponent drzewa BOM z funkcjonalnością drag-and-drop
+const BomTreeViewDraggable: React.FC<BomTreeViewDraggableProps> = ({
+  items,
+  onItemSelected,
+  onItemsReordered
+}) => {
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [draggedItem, setDraggedItem] = useState<DragItem | null>(null);
+  
+  // Pomocnicza funkcja do znajdowania elementu po ID
+  const findItemById = (id: string, itemsList: BomItemType[]): BomItemType | null => {
+    for (const item of itemsList) {
+      if (item.id === id) {
+        return item;
+      }
+      if (item.children && item.children.length > 0) {
+        const found = findItemById(id, item.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  
+  // Sprawdzenie czy przeciągnięcie jest prawidłowe
+  const isValidDrop = (sourceId: string, targetId: string): boolean => {
+    // Nie można upuścić elementu na samego siebie
+    if (sourceId === targetId) return false;
+    
+    const source = findItemById(sourceId, items);
+    const target = findItemById(targetId, items);
+    
+    if (!source || !target) return false;
+    
+    // Sprawdzenie czy target nie jest dzieckiem source (unikamy cykli)
+    const isTargetChildOfSource = (parent: BomItemType, childId: string): boolean => {
+      if (!parent.children) return false;
+      
+      for (const child of parent.children) {
+        if (child.id === childId) return true;
+        if (child.children && isTargetChildOfSource(child, childId)) return true;
+      }
+      
+      return false;
+    };
+    
+    return !isTargetChildOfSource(source, targetId);
+  };
+
+  const handleToggle = (id: string) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelect = (id: string) => {
+    setSelectedItem(id);
+    const item = findItemById(id, items);
+    if (item) {
+      onItemSelected(item);
+    }
+  };
+
+  const handleDragStart = (item: DragItem) => {
+    setDraggedItem(item);
+  };
+
+  // Rekursywna funkcja do aktualizacji struktury BOM po upuszczeniu
+  const moveItem = (
+    items: BomItemType[],
+    sourceId: string,
+    targetId: string
+  ): BomItemType[] => {
+    // Znajdź element źródłowy i jego indeks
+    let sourceItem: BomItemType | null = null;
+    let sourcePath: number[] = [];
+    
+    const findSourcePath = (
+      items: BomItemType[],
+      id: string,
+      path: number[] = []
+    ): boolean => {
+      for (let i = 0; i < items.length; i++) {
+        const currentPath = [...path, i];
+        if (items[i].id === id) {
+          sourceItem = { ...items[i] };
+          sourcePath = currentPath;
+          return true;
+        }
+        if (items[i].children && items[i].children.length > 0) {
+          if (findSourcePath(items[i].children, id, currentPath)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+    
+    findSourcePath(items, sourceId);
+    
+    if (!sourceItem) return [...items];
+    
+    // Skopiuj strukturę BOM, aby ją zmodyfikować
+    const newItems = JSON.parse(JSON.stringify(items)) as BomItemType[];
+    
+    // Usuń element źródłowy z jego obecnej lokalizacji
+    const removeSourceItem = (
+      items: BomItemType[],
+      path: number[]
+    ): BomItemType[] => {
+      if (path.length === 1) {
+        return [
+          ...items.slice(0, path[0]),
+          ...items.slice(path[0] + 1)
+        ];
+      }
+      
+      const index = path[0];
+      const newChildren = removeSourceItem(
+        items[index].children || [],
+        path.slice(1)
+      );
+      
+      return [
+        ...items.slice(0, index),
+        {
+          ...items[index],
+          children: newChildren
+        },
+        ...items.slice(index + 1)
+      ];
+    };
+    
+    const itemsWithoutSource = removeSourceItem(newItems, sourcePath);
+    
+    // Dodaj element źródłowy do nowej lokalizacji
+    const addToTarget = (
+      items: BomItemType[],
+      targetId: string,
+      sourceItem: BomItemType
+    ): BomItemType[] => {
+      return items.map(item => {
+        if (item.id === targetId) {
+          // Dodaj jako dziecko elementu docelowego
+          return {
+            ...item,
+            children: [
+              ...(item.children || []),
+              {
+                ...sourceItem,
+                parentId: item.id
+              }
+            ]
+          };
+        }
+        
+        if (item.children && item.children.length > 0) {
+          return {
+            ...item,
+            children: addToTarget(item.children, targetId, sourceItem)
+          };
+        }
+        
+        return item;
+      });
+    };
+    
+    const result = addToTarget(itemsWithoutSource, targetId, sourceItem);
+    return result;
+  };
+
+  const handleDrop = (targetId: string, draggedItem: DragItem) => {
+    if (isValidDrop(draggedItem.id, targetId)) {
+      const newItems = moveItem(items, draggedItem.id, targetId);
+      onItemsReordered(newItems);
+      
+      // Rozwiń element docelowy, aby pokazać nowo dodane dziecko
+      setExpandedItems(prev => {
+        const newSet = new Set(prev);
+        newSet.add(targetId);
+        return newSet;
+      });
+    }
+    
+    setDraggedItem(null);
+  };
+
+  return (
+    <div className="p-2 border rounded-lg bg-white">
+      <div className="font-medium mb-2">Struktura BOM</div>
+      <div>
+        {items.map((item, index) => (
+          <TreeNode
+            key={item.id}
+            item={item}
+            depth={0}
+            index={index}
+            isExpanded={expandedItems.has(item.id)}
+            isSelected={selectedItem === item.id}
+            onToggle={handleToggle}
+            onSelect={handleSelect}
+            parentId={null}
+            onDragStart={handleDragStart}
+            onDrop={handleDrop}
+            isValidDropTarget={(sourceId, targetId) => isValidDrop(sourceId, targetId)}
+            draggedItemId={draggedItem ? draggedItem.id : null}
+          />
+        ))}
+      </div>
     </div>
   );
 };
