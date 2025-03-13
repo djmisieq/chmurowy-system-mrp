@@ -16,7 +16,84 @@ export interface ValidationResult {
   warnings: string[];
 }
 
+// Interfejs mapy elementów BOM dla szybkiego dostępu po ID
+interface BomItemMap {
+  [id: string]: {
+    item: BomItem;
+    depth: number;
+    path: string[];
+  }
+}
+
 export class BomValidationService {
+  // Bufor mapujący elementy po ID dla ostatnio walidowanej struktury BOM
+  private static lastBomStructureHash: string = '';
+  private static itemCache: BomItemMap = {};
+  
+  /**
+   * Generuje prosty skrót z tablicy elementów BOM
+   * do sprawdzenia, czy struktura się zmieniła i trzeba zbudować nowy bufor
+   */
+  private static generateBomHash(bomItems: BomItem[]): string {
+    return bomItems.map(item => item.id).join('|');
+  }
+  
+  /**
+   * Przygotowuje bufor elementów BOM do szybkiego wyszukiwania
+   * @param bomItems Struktura BOM
+   * @returns Mapa elementów indeksowana po ID
+   */
+  private static prepareBomItemMap(bomItems: BomItem[]): BomItemMap {
+    const itemMap: BomItemMap = {};
+    
+    // Rekurencyjnie buduje mapę z informacją o głębokości i ścieżce
+    const buildMap = (
+      items: BomItem[], 
+      depth: number = 0, 
+      path: string[] = []
+    ) => {
+      for (const item of items) {
+        const itemPath = [...path, item.id];
+        itemMap[item.id] = {
+          item,
+          depth,
+          path: itemPath
+        };
+        
+        if (item.children && item.children.length > 0) {
+          buildMap(item.children, depth + 1, itemPath);
+        }
+      }
+    };
+    
+    buildMap(bomItems);
+    return itemMap;
+  }
+  
+  /**
+   * Aktualizuje bufor elementów, jeśli struktura BOM się zmieniła
+   * @param bomItems Struktura BOM
+   */
+  private static updateItemCacheIfNeeded(bomItems: BomItem[]): void {
+    const bomHash = this.generateBomHash(bomItems);
+    if (bomHash !== this.lastBomStructureHash) {
+      this.itemCache = this.prepareBomItemMap(bomItems);
+      this.lastBomStructureHash = bomHash;
+    }
+  }
+  
+  /**
+   * Szybkie znajdowanie elementu po ID przy użyciu buforowanej mapy
+   * @param id ID elementu do znalezienia
+   * @param bomItems Struktura BOM (używana do aktualizacji bufora, jeśli potrzeba)
+   * @returns Znaleziony element lub null
+   */
+  private static findItemById(id: string, bomItems: BomItem[]): BomItem | null {
+    this.updateItemCacheIfNeeded(bomItems);
+    
+    const cached = this.itemCache[id];
+    return cached ? cached.item : null;
+  }
   
   /**
    * Sprawdza czy można przenieść element do innego elementu w strukturze BOM
@@ -32,6 +109,9 @@ export class BomValidationService {
       warnings: []
     };
     
+    // Aktualizacja bufora dla szybkiego dostępu
+    this.updateItemCacheIfNeeded(bomItems);
+    
     // Nie można przenieść elementu do samego siebie
     if (sourceId === targetId) {
       result.isValid = false;
@@ -39,24 +119,28 @@ export class BomValidationService {
       return result;
     }
     
-    // Znajdź elementy źródłowy i docelowy
-    const source = this.findItemById(sourceId, bomItems);
-    const target = this.findItemById(targetId, bomItems);
+    // Szybkie sprawdzenie czy elementy istnieją
+    const sourceCached = this.itemCache[sourceId];
+    const targetCached = this.itemCache[targetId];
     
-    if (!source) {
+    if (!sourceCached) {
       result.isValid = false;
       result.errors.push('Element źródłowy nie został znaleziony');
       return result;
     }
     
-    if (!target) {
+    if (!targetCached) {
       result.isValid = false;
       result.errors.push('Element docelowy nie został znaleziony');
       return result;
     }
     
-    // Sprawdzenie czy operacja nie tworzy cyklu (element nie może być częścią samego siebie)
-    if (this.isDescendant(source, targetId, bomItems)) {
+    const source = sourceCached.item;
+    const target = targetCached.item;
+    
+    // Sprawdzenie czy operacja nie tworzy cyklu - używając buforowanych ścieżek
+    // Element nie może być przeniesiony do swojego potomka
+    if (targetCached.path.includes(sourceId)) {
       result.isValid = false;
       result.errors.push('Ta operacja spowodowałaby cykl w strukturze BOM');
       return result;
@@ -69,8 +153,8 @@ export class BomValidationService {
       return result;
     }
     
-    // Sprawdzenie maksymalnej głębokości (opcjonalne)
-    const targetDepth = this.calculateDepth(target, bomItems);
+    // Sprawdzenie maksymalnej głębokości
+    const targetDepth = targetCached.depth;
     if (targetDepth >= 5) { // Przykładowy limit głębokości
       result.warnings.push('Ten element będzie znajdować się na dużej głębokości struktury, co może utrudnić zarządzanie');
     }
@@ -109,87 +193,6 @@ export class BomValidationService {
   }
   
   /**
-   * Sprawdza czy element jest potomkiem innego elementu
-   * @param item Element do sprawdzenia
-   * @param potentialParentId ID potencjalnego rodzica
-   * @param bomItems Pełna struktura BOM
-   * @returns Czy element jest potomkiem
-   */
-  private static isDescendant(item: BomItem, potentialParentId: string, bomItems: BomItem[]): boolean {
-    if (!potentialParentId) return false;
-    
-    // Znajdź ścieżkę do potencjalnego rodzica
-    const path = this.findPathToItem(potentialParentId, bomItems);
-    
-    // Jeśli element źródłowy znajduje się na ścieżce, operacja spowodowałaby cykl
-    return path.includes(item.id);
-  }
-  
-  /**
-   * Znajduje ścieżkę do elementu w strukturze BOM
-   * @param itemId ID elementu do znalezienia
-   * @param bomItems Struktura BOM do przeszukania
-   * @param currentPath Aktualna ścieżka (używane rekurencyjnie)
-   * @returns Tablica ID elementów tworzących ścieżkę
-   */
-  private static findPathToItem(
-    itemId: string,
-    bomItems: BomItem[],
-    currentPath: string[] = []
-  ): string[] {
-    for (const item of bomItems) {
-      const newPath = [...currentPath, item.id];
-      
-      if (item.id === itemId) {
-        return newPath;
-      }
-      
-      if (item.children && item.children.length) {
-        const found = this.findPathToItem(itemId, item.children, newPath);
-        if (found.length > 0) {
-          return found;
-        }
-      }
-    }
-    
-    return [];
-  }
-  
-  /**
-   * Oblicza głębokość elementu w strukturze BOM
-   * @param item Element do sprawdzenia
-   * @param bomItems Pełna struktura BOM
-   * @returns Głębokość elementu (0 dla elementów najwyższego poziomu)
-   */
-  private static calculateDepth(item: BomItem, bomItems: BomItem[]): number {
-    const path = this.findPathToItem(item.id, bomItems);
-    return path.length - 1;
-  }
-  
-  /**
-   * Znajduje element po ID w strukturze BOM
-   * @param id ID elementu do znalezienia
-   * @param bomItems Struktura BOM do przeszukania
-   * @returns Znaleziony element lub null
-   */
-  private static findItemById(id: string, bomItems: BomItem[]): BomItem | null {
-    for (const item of bomItems) {
-      if (item.id === id) {
-        return item;
-      }
-      
-      if (item.children && item.children.length) {
-        const found = this.findItemById(id, item.children);
-        if (found) {
-          return found;
-        }
-      }
-    }
-    
-    return null;
-  }
-  
-  /**
    * Waliduje pełną strukturę BOM w poszukiwaniu błędów
    * @param bomItems Struktura BOM do walidacji
    * @returns Wynik walidacji
@@ -201,11 +204,16 @@ export class BomValidationService {
       warnings: []
     };
     
+    // Aktualizacja buforowanej mapy
+    this.updateItemCacheIfNeeded(bomItems);
+    
     // Zbiór unikalnych ID
     const seenIds = new Set<string>();
     
-    // Walidacja rekurencyjna
-    const validateItem = (item: BomItem, depth: number, parentType: string | null) => {
+    // Walidacja wszystkich elementów w buforze (już posiadamy informacje o głębokości)
+    for (const id in this.itemCache) {
+      const { item, depth } = this.itemCache[id];
+      
       // Sprawdź unikalność ID
       if (seenIds.has(item.id)) {
         result.isValid = false;
@@ -215,9 +223,12 @@ export class BomValidationService {
       }
       
       // Sprawdź czy typ elementu jest dozwolony jako dziecko typu rodzica
-      if (parentType && !this.isValidParentChildTypePair(parentType, item.type)) {
-        result.isValid = false;
-        result.errors.push(`Niedozwolona relacja: element typu '${item.type}' nie może być częścią elementu typu '${parentType}'`);
+      if (item.parentId) {
+        const parent = this.itemCache[item.parentId]?.item;
+        if (parent && !this.isValidParentChildTypePair(parent.type, item.type)) {
+          result.isValid = false;
+          result.errors.push(`Niedozwolona relacja: element typu '${item.type}' nie może być częścią elementu typu '${parent.type}'`);
+        }
       }
       
       // Sprawdź maksymalną głębokość
@@ -231,16 +242,7 @@ export class BomValidationService {
           result.isValid = false;
           result.errors.push(`Materiał nie może mieć dzieci: ${item.name} (${item.id})`);
         }
-        
-        for (const child of item.children) {
-          validateItem(child, depth + 1, item.type);
-        }
       }
-    };
-    
-    // Rozpocznij walidację
-    for (const item of bomItems) {
-      validateItem(item, 0, null);
     }
     
     return result;
@@ -266,6 +268,14 @@ export class BomValidationService {
       default:
         return true;
     }
+  }
+  
+  /**
+   * Czyszczenie bufora (użyteczne np. przy testach)
+   */
+  static clearCache(): void {
+    this.lastBomStructureHash = '';
+    this.itemCache = {};
   }
 }
 
