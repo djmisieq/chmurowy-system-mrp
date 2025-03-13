@@ -1,698 +1,675 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { SearchIcon, RefreshCw, Download, Eye, Table, FileText, Edit, Plus, Sidebar, PanelRightClose, PanelRightOpen, FilePlus, MoveHorizontal } from 'lucide-react';
-import BomTreeView from './BomTreeView';
+import { toast } from 'react-hot-toast';
+import { 
+  Plus, Save, FileDown, FileUp, AlertTriangle, 
+  Undo, Redo, RefreshCw, ChevronsRight, Clipboard
+} from 'lucide-react';
+
 import BomTreeViewDraggable from './BomTreeViewDraggable';
 import BomItemDetail from './BomItemDetail';
 import BomItemAddModal from './BomItemAddModal';
 import BomItemEditModal from './BomItemEditModal';
-import { ProductBom, BomItem } from '@/types/bom.types';
-import { useRouter } from 'next/navigation';
+import BomMetadataForm from './BomMetadataForm';
+import BomErrorModal from './BomErrorModal';
 
-interface BomExplorerProps {
-  initialBomId?: string;
+import { useBomDragValidation } from '@/hooks/useBomDragValidation';
+import { ValidationResult } from '@/services/BomValidationService';
+
+// Import typów i styli
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
+
+interface BomItemType {
+  id: string;
+  name: string;
+  type: string;
+  quantity: number;
+  unit: string;
+  parentId: string | null;
+  children?: BomItemType[];
+  [key: string]: any;
 }
 
-const BomExplorer: React.FC<BomExplorerProps> = ({ initialBomId }) => {
+interface BomType {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  version: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  items: BomItemType[];
+  [key: string]: any;
+}
+
+interface BomExplorerProps {
+  bomId?: string;
+  initialData?: BomType;
+  isNew?: boolean;
+}
+
+/**
+ * Główny komponent eksploratora BOM - pozwala na przeglądanie i edycję struktury BOM
+ */
+const BomExplorer: React.FC<BomExplorerProps> = ({ 
+  bomId, 
+  initialData, 
+  isNew = false 
+}) => {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [boms, setBoms] = useState<ProductBom[]>([]);
-  const [selectedBomId, setSelectedBomId] = useState<string | undefined>(initialBomId);
-  const [selectedBom, setSelectedBom] = useState<ProductBom | null>(null);
-  const [viewMode, setViewMode] = useState<'tree' | 'table' | 'details'>('tree');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedItem, setSelectedItem] = useState<BomItem | null>(null);
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [bomData, setBomData] = useState<BomType | null>(initialData || null);
+  const [selectedItem, setSelectedItem] = useState<BomItemType | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [parentIdForAdd, setParentIdForAdd] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('structure');
+  const [isSaving, setIsSaving] = useState(false);
   
-  // State for modals
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [itemToEdit, setItemToEdit] = useState<BomItem | null>(null);
+  // Historia zmian dla undo/redo
+  const [history, setHistory] = useState<BomType[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   
-  // State for drag and drop
-  const [isDragEnabled, setIsDragEnabled] = useState(true);
-
+  // Stan walidacji
+  const [validationModalOpen, setValidationModalOpen] = useState(false);
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+  const [pendingDragOperation, setPendingDragOperation] = useState<{
+    sourceId: string;
+    targetId: string;
+    sourceItem?: BomItemType;
+    targetItem?: BomItemType;
+  } | null>(null);
+  
+  // Użycie hooka do walidacji drag-and-drop
+  const {
+    validateDrop,
+    handleDragStart,
+    handleDragEnd,
+    isValidDropTarget
+  } = useBomDragValidation(bomData?.items || []);
+  
+  // Efekt inicjalizacji
   useEffect(() => {
-    const fetchBoms = async () => {
-      try {
-        setLoading(true);
-        // Pobieranie z mock API
-        const response = await axios.get('/product-boms.json');
-        const data: ProductBom[] = response.data;
-        setBoms(data);
-        
-        // Wybierz pierwszy BOM jeśli nie ma initialBomId
-        if (!initialBomId && data.length > 0) {
-          setSelectedBomId(data[0].id);
-        }
-        
-      } catch (error) {
-        console.error('Błąd podczas pobierania struktur BOM:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBoms();
-  }, [initialBomId]);
-
-  useEffect(() => {
-    if (selectedBomId && boms.length > 0) {
-      const bom = boms.find(b => b.id === selectedBomId);
-      setSelectedBom(bom || null);
-      setSelectedItem(null); // Reset selected item when changing BOM
-    } else {
-      setSelectedBom(null);
-      setSelectedItem(null);
+    if (initialData) {
+      setBomData(initialData);
+      // Inicjalizacja historii
+      setHistory([initialData]);
+      setHistoryIndex(0);
+    } else if (bomId && !isNew) {
+      fetchBomData();
+    } else if (isNew) {
+      // Utworzenie pustego szablonu dla nowego BOM
+      const newBom: BomType = {
+        id: 'temp_' + Date.now(),
+        name: 'Nowy BOM',
+        description: '',
+        status: 'draft',
+        version: '1.0.0',
+        createdBy: 'current_user', // W rzeczywistości powinno być pobrane z kontekstu auth
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        items: []
+      };
+      setBomData(newBom);
+      setHistory([newBom]);
+      setHistoryIndex(0);
     }
-  }, [selectedBomId, boms]);
-
-  const handleRefresh = () => {
-    // Re-fetch data
-    const fetchBoms = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('/product-boms.json');
-        setBoms(response.data);
-      } catch (error) {
-        console.error('Błąd podczas odświeżania struktur BOM:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBoms();
-  };
-
-  const handleExport = () => {
-    if (!selectedBom) return;
-    
-    const dataStr = JSON.stringify(selectedBom, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `bom-${selectedBom.id}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  };
-
-  const handleCreateNew = () => {
-    router.push('/production/bom/new');
-  };
-
-  const handleEdit = () => {
-    if (selectedBomId) {
-      router.push(`/production/bom/edit/${selectedBomId}`);
+  }, [initialData, bomId, isNew]);
+  
+  /**
+   * Pobieranie danych BOM z API
+   */
+  const fetchBomData = async () => {
+    try {
+      // Tutaj będzie prawdziwe API w przyszłości
+      const response = await axios.get(`/api/boms/${bomId}`);
+      setBomData(response.data);
+      // Inicjalizacja historii
+      setHistory([response.data]);
+      setHistoryIndex(0);
+    } catch (error) {
+      console.error('Error fetching BOM data:', error);
+      toast.error('Nie udało się pobrać danych BOM');
     }
   };
-
-  const handleItemSelect = (item: BomItem) => {
+  
+  /**
+   * Dodanie aktualnego stanu do historii
+   */
+  const addToHistory = useCallback((data: BomType) => {
+    // Usunięcie przyszłej historii jeśli cofnęliśmy się
+    const newHistory = history.slice(0, historyIndex + 1);
+    // Dodanie nowego stanu
+    newHistory.push(JSON.parse(JSON.stringify(data)));
+    // Aktualizacja historii z limitowaniem do 20 stanów
+    setHistory(newHistory.slice(-20));
+    setHistoryIndex(newHistory.length - 1);
+  }, [history, historyIndex]);
+  
+  /**
+   * Cofnięcie ostatniej zmiany
+   */
+  const handleUndo = useCallback(() => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setBomData(JSON.parse(JSON.stringify(history[newIndex])));
+    }
+  }, [history, historyIndex]);
+  
+  /**
+   * Ponowienie cofniętej zmiany
+   */
+  const handleRedo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setBomData(JSON.parse(JSON.stringify(history[newIndex])));
+    }
+  }, [history, historyIndex]);
+  
+  /**
+   * Obsługa zaznaczenia elementu
+   */
+  const handleItemSelected = (item: BomItemType | null) => {
     setSelectedItem(item);
-    
-    // Automatically show sidebar when item is selected
-    if (!showSidebar) {
-      setShowSidebar(true);
-    }
   };
-
-  const handleAddItem = () => {
-    setShowAddModal(true);
+  
+  /**
+   * Otwarcie modalnego okna dodawania nowego elementu
+   */
+  const handleAddItem = (parentId: string | null = null) => {
+    setParentIdForAdd(parentId);
+    setIsAddModalOpen(true);
   };
-
-  const handleEditItem = (item: BomItem) => {
-    setItemToEdit(item);
-    setShowEditModal(true);
-  };
-
-  const handleSaveNewItem = (newItem: Omit<BomItem, 'id'>) => {
-    if (!selectedBom) return;
+  
+  /**
+   * Obsługa zapisania nowego elementu
+   */
+  const handleItemAdded = (newItem: BomItemType) => {
+    if (!bomData) return;
     
-    // In a real application, we would send this to the server
-    // For now, we'll just add it to the selectedBom in memory
+    // Głęboka kopia aktualnych danych
+    const newBomData = JSON.parse(JSON.stringify(bomData));
     
-    // Create a new item with a generated ID
-    const itemWithId: BomItem = {
-      ...newItem,
-      id: `item-${Date.now()}`, // Generate a unique ID
-    };
-    
-    // If an item is selected, add as a child to that item
-    if (selectedItem) {
-      // Deep clone the BOM to avoid directly mutating state
-      const updatedBom = JSON.parse(JSON.stringify(selectedBom)) as ProductBom;
-      
-      // Function to recursively find and update the selected item
-      const updateItemChildren = (items: BomItem[]): boolean => {
+    if (parentIdForAdd === null) {
+      // Dodanie na najwyższym poziomie
+      newBomData.items.push(newItem);
+    } else {
+      // Dodanie jako dziecko wybranego elementu
+      const addChildToParent = (items: BomItemType[], parentId: string): boolean => {
         for (let i = 0; i < items.length; i++) {
-          if (items[i].id === selectedItem.id) {
-            // Found the selected item, add the new item as a child
+          if (items[i].id === parentId) {
+            // Dodaj dziecko do znalezionego rodzica
             if (!items[i].children) {
               items[i].children = [];
             }
-            items[i].children.push(itemWithId);
+            items[i].children.push(newItem);
             return true;
           }
           
-          // Recursively search in children
-          if (items[i].children && updateItemChildren(items[i].children)) {
-            return true;
+          // Rekurencyjne przeszukiwanie dzieci
+          if (items[i].children && items[i].children.length > 0) {
+            if (addChildToParent(items[i].children, parentId)) {
+              return true;
+            }
           }
         }
         return false;
       };
       
-      // Start the recursive search from the root item
-      if (updatedBom.rootItem.id === selectedItem.id) {
-        if (!updatedBom.rootItem.children) {
-          updatedBom.rootItem.children = [];
-        }
-        updatedBom.rootItem.children.push(itemWithId);
-      } else if (updatedBom.rootItem.children) {
-        updateItemChildren(updatedBom.rootItem.children);
-      }
-      
-      // Update the BOM in state
-      setSelectedBom(updatedBom);
-      
-      // Update in the boms array
-      setBoms(prevBoms => prevBoms.map(bom => 
-        bom.id === updatedBom.id ? updatedBom : bom
-      ));
-    } else {
-      // If no item is selected, add to root item's children
-      const updatedBom = JSON.parse(JSON.stringify(selectedBom)) as ProductBom;
-      
-      if (!updatedBom.rootItem.children) {
-        updatedBom.rootItem.children = [];
-      }
-      updatedBom.rootItem.children.push(itemWithId);
-      
-      setSelectedBom(updatedBom);
-      
-      // Update in the boms array
-      setBoms(prevBoms => prevBoms.map(bom => 
-        bom.id === updatedBom.id ? updatedBom : bom
-      ));
+      addChildToParent(newBomData.items, parentIdForAdd);
+    }
+    
+    setBomData(newBomData);
+    addToHistory(newBomData);
+    setIsAddModalOpen(false);
+    toast.success('Element dodany pomyślnie');
+  };
+  
+  /**
+   * Otwarcie modalnego okna edycji elementu
+   */
+  const handleEditItem = () => {
+    if (selectedItem) {
+      setIsEditModalOpen(true);
     }
   };
-
-  const handleSaveEditedItem = (editedItem: BomItem) => {
-    if (!selectedBom || !itemToEdit) return;
+  
+  /**
+   * Obsługa aktualizacji elementu
+   */
+  const handleItemUpdated = (updatedItem: BomItemType) => {
+    if (!bomData || !selectedItem) return;
     
-    // Deep clone the BOM to avoid directly mutating state
-    const updatedBom = JSON.parse(JSON.stringify(selectedBom)) as ProductBom;
+    // Głęboka kopia aktualnych danych
+    const newBomData = JSON.parse(JSON.stringify(bomData));
     
-    // Function to recursively find and update the item
-    const updateItem = (items: BomItem[]): boolean => {
+    // Funkcja do aktualizacji elementu w drzewie
+    const updateItemInTree = (items: BomItemType[], itemId: string): boolean => {
       for (let i = 0; i < items.length; i++) {
-        if (items[i].id === editedItem.id) {
-          // Found the item, update it (preserve children)
+        if (items[i].id === itemId) {
+          // Zachowaj dzieci
           const children = items[i].children;
-          items[i] = { ...editedItem };
+          // Aktualizuj element
+          items[i] = { ...updatedItem };
+          // Przywróć dzieci
           if (children) {
             items[i].children = children;
           }
           return true;
         }
         
-        // Recursively search in children
-        if (items[i].children && updateItem(items[i].children)) {
-          return true;
-        }
-      }
-      return false;
-    };
-    
-    // Check if it's the root item
-    if (updatedBom.rootItem.id === editedItem.id) {
-      const children = updatedBom.rootItem.children;
-      updatedBom.rootItem = { ...editedItem };
-      if (children) {
-        updatedBom.rootItem.children = children;
-      }
-    } else if (updatedBom.rootItem.children) {
-      updateItem(updatedBom.rootItem.children);
-    }
-    
-    // Update the BOM in state
-    setSelectedBom(updatedBom);
-    
-    // If the edited item is the currently selected item, update it
-    if (selectedItem && selectedItem.id === editedItem.id) {
-      setSelectedItem(editedItem);
-    }
-    
-    // Update in the boms array
-    setBoms(prevBoms => prevBoms.map(bom => 
-      bom.id === updatedBom.id ? updatedBom : bom
-    ));
-    
-    // Close the edit modal
-    setShowEditModal(false);
-    setItemToEdit(null);
-  };
-
-  const handleDeleteItem = (itemToDelete: BomItem) => {
-    if (!selectedBom) return;
-    
-    // Deep clone the BOM to avoid directly mutating state
-    const updatedBom = JSON.parse(JSON.stringify(selectedBom)) as ProductBom;
-    
-    // Function to recursively find and remove the item
-    const removeItem = (items: BomItem[]): BomItem[] => {
-      return items.filter(item => {
-        if (item.id === itemToDelete.id) {
-          return false; // Remove this item
-        }
-        
-        // If this item has children, recursively filter them
-        if (item.children && item.children.length > 0) {
-          item.children = removeItem(item.children);
-        }
-        
-        return true;
-      });
-    };
-    
-    // Check if it's the root item (can't delete root)
-    if (updatedBom.rootItem.id === itemToDelete.id) {
-      alert('Nie można usunąć głównego elementu struktury BOM.');
-      return;
-    }
-    
-    // Process children of root
-    if (updatedBom.rootItem.children) {
-      updatedBom.rootItem.children = removeItem(updatedBom.rootItem.children);
-    }
-    
-    // Update the BOM in state
-    setSelectedBom(updatedBom);
-    
-    // If the deleted item is the currently selected item, deselect it
-    if (selectedItem && selectedItem.id === itemToDelete.id) {
-      setSelectedItem(null);
-    }
-    
-    // Update in the boms array
-    setBoms(prevBoms => prevBoms.map(bom => 
-      bom.id === updatedBom.id ? updatedBom : bom
-    ));
-    
-    // Close the edit modal
-    setShowEditModal(false);
-    setItemToEdit(null);
-  };
-  
-  // Handler for drag and drop operations
-  const handleItemDrop = (draggedItemId: string, targetItemId: string, position: 'inside' | 'before' | 'after') => {
-    if (!selectedBom) return;
-    
-    // Deep clone the BOM to avoid directly mutating state
-    const updatedBom = JSON.parse(JSON.stringify(selectedBom)) as ProductBom;
-    
-    // First, find and extract the dragged item from its current location
-    let draggedItem: BomItem | null = null;
-    
-    // Function to recursively find and remove an item
-    const removeItemById = (items: BomItem[]): BomItem[] => {
-      return items.filter(item => {
-        if (item.id === draggedItemId) {
-          draggedItem = { ...item }; // Store the dragged item before removing
-          return false; // Remove from its current position
-        }
-        
-        // Check children recursively
-        if (item.children && item.children.length > 0) {
-          item.children = removeItemById(item.children);
-        }
-        
-        return true;
-      });
-    };
-    
-    // Special case for root item (can't move root)
-    if (updatedBom.rootItem.id === draggedItemId) {
-      alert('Nie można przenieść głównego elementu struktury BOM.');
-      return;
-    }
-    
-    // Remove the dragged item from its current position
-    if (updatedBom.rootItem.children) {
-      updatedBom.rootItem.children = removeItemById(updatedBom.rootItem.children);
-    }
-    
-    // If the dragged item was not found, exit
-    if (!draggedItem) {
-      console.error('Nie znaleziono przenoszonego elementu.');
-      return;
-    }
-    
-    // Now, find the target item and insert the dragged item in the appropriate position
-    const insertItem = (items: BomItem[]): boolean => {
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].id === targetItemId) {
-          // Found the target item
-          switch (position) {
-            case 'inside':
-              // Add as a child of this item
-              if (!items[i].children) {
-                items[i].children = [];
-              }
-              items[i].children.push(draggedItem!);
-              return true;
-            
-            case 'before':
-              // Insert before this item
-              items.splice(i, 0, draggedItem!);
-              return true;
-            
-            case 'after':
-              // Insert after this item
-              items.splice(i + 1, 0, draggedItem!);
-              return true;
-          }
-        }
-        
-        // Check children recursively
+        // Rekurencyjne przeszukiwanie dzieci
         if (items[i].children && items[i].children.length > 0) {
-          if (insertItem(items[i].children)) {
+          if (updateItemInTree(items[i].children, itemId)) {
             return true;
           }
         }
       }
-      
       return false;
     };
     
-    // Handle drop onto the root item
-    if (updatedBom.rootItem.id === targetItemId) {
-      switch (position) {
-        case 'inside':
-          // Add as a child of root
-          if (!updatedBom.rootItem.children) {
-            updatedBom.rootItem.children = [];
-          }
-          updatedBom.rootItem.children.push(draggedItem);
-          break;
+    updateItemInTree(newBomData.items, selectedItem.id);
+    setBomData(newBomData);
+    setSelectedItem(updatedItem); // Aktualizuj również zaznaczony element
+    addToHistory(newBomData);
+    setIsEditModalOpen(false);
+    toast.success('Element zaktualizowany pomyślnie');
+  };
+  
+  /**
+   * Obsługa usunięcia elementu
+   */
+  const handleItemDeleted = (itemId: string) => {
+    if (!bomData) return;
+    
+    // Głęboka kopia aktualnych danych
+    const newBomData = JSON.parse(JSON.stringify(bomData));
+    
+    // Funkcja do usuwania elementu z drzewa
+    const removeItemFromTree = (items: BomItemType[], itemId: string): boolean => {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].id === itemId) {
+          // Usuń element
+          items.splice(i, 1);
+          return true;
+        }
         
-        case 'before':
-        case 'after':
-          // Can't insert before or after root, so just add as a child
-          if (!updatedBom.rootItem.children) {
-            updatedBom.rootItem.children = [];
+        // Rekurencyjne przeszukiwanie dzieci
+        if (items[i].children && items[i].children.length > 0) {
+          if (removeItemFromTree(items[i].children, itemId)) {
+            return true;
           }
-          updatedBom.rootItem.children.push(draggedItem);
-          break;
+        }
       }
-    } else if (updatedBom.rootItem.children) {
-      // Insert into the tree
-      insertItem(updatedBom.rootItem.children);
-    }
+      return false;
+    };
     
-    // Update the BOM in state
-    setSelectedBom(updatedBom);
+    removeItemFromTree(newBomData.items, itemId);
+    setBomData(newBomData);
+    setSelectedItem(null); // Wyczyść zaznaczenie
+    addToHistory(newBomData);
+    setIsEditModalOpen(false);
+    toast.success('Element usunięty pomyślnie');
+  };
+  
+  /**
+   * Obsługa zmian w metadanych BOM
+   */
+  const handleMetadataChange = (updatedMetadata: Partial<BomType>) => {
+    if (!bomData) return;
     
-    // Update in the boms array
-    setBoms(prevBoms => prevBoms.map(bom => 
-      bom.id === updatedBom.id ? updatedBom : bom
-    ));
+    const newBomData = {
+      ...bomData,
+      ...updatedMetadata,
+      updatedAt: new Date().toISOString()
+    };
     
-    // If the moved item is the currently selected item, update the selection
-    if (selectedItem && selectedItem.id === draggedItemId) {
-      setSelectedItem(draggedItem);
+    setBomData(newBomData);
+    addToHistory(newBomData);
+    toast.success('Metadane zaktualizowane pomyślnie');
+  };
+  
+  /**
+   * Obsługa zapisywania BOM
+   */
+  const handleSave = async () => {
+    if (!bomData) return;
+    
+    setIsSaving(true);
+    try {
+      // W przyszłości to będzie prawdziwe API
+      if (isNew) {
+        // Tworzenie nowego BOM
+        await axios.post('/api/boms', bomData);
+        toast.success('BOM został utworzony pomyślnie');
+        // Przekierowanie do widoku BOM
+        router.push(`/production/bom/${bomData.id}`);
+      } else {
+        // Aktualizacja istniejącego BOM
+        await axios.put(`/api/boms/${bomId}`, bomData);
+        toast.success('BOM został zapisany pomyślnie');
+      }
+    } catch (error) {
+      console.error('Error saving BOM:', error);
+      toast.error('Nie udało się zapisać BOM');
+    } finally {
+      setIsSaving(false);
     }
   };
-
-  const renderContent = () => {
-    if (loading) {
-      return (
-        <div className="flex justify-center items-center h-64">
-          <RefreshCw className="animate-spin h-10 w-10 text-primary-500" />
-        </div>
-      );
+  
+  /**
+   * Obsługa przeorganizowania struktury BOM przez drag-and-drop
+   */
+  const handleItemsReordered = (newItems: BomItemType[]) => {
+    if (!bomData) return;
+    
+    const newBomData = {
+      ...bomData,
+      items: newItems,
+      updatedAt: new Date().toISOString()
+    };
+    
+    setBomData(newBomData);
+    addToHistory(newBomData);
+    toast.success('Struktura BOM zaktualizowana pomyślnie');
+  };
+  
+  /**
+   * Funkcja do obsługi walidacji drag-and-drop z wyświetlaniem modalu
+   */
+  const handleValidatedDrop = (sourceId: string, targetId: string) => {
+    // Znajdź elementy źródłowy i docelowy dla lepszych komunikatów błędów
+    const findItem = (id: string, items: BomItemType[]): BomItemType | undefined => {
+      for (const item of items) {
+        if (item.id === id) return item;
+        if (item.children?.length) {
+          const found = findItem(id, item.children);
+          if (found) return found;
+        }
+      }
+      return undefined;
+    };
+    
+    const sourceItem = bomData?.items ? findItem(sourceId, bomData.items) : undefined;
+    const targetItem = bomData?.items ? findItem(targetId, bomData.items) : undefined;
+    
+    // Przeprowadź pełną walidację
+    const result = validateDrop(sourceId, targetId);
+    
+    if (!result.isValid || result.warnings.length > 0) {
+      // Zapisz informacje o oczekującej operacji
+      setPendingDragOperation({
+        sourceId,
+        targetId,
+        sourceItem,
+        targetItem
+      });
+      
+      setValidationResult(result);
+      setValidationModalOpen(true);
+      return false;
     }
     
-    if (!selectedBom) {
-      return (
-        <div className="flex justify-center items-center h-64 text-gray-500">
-          Wybierz strukturę BOM z listy
-        </div>
-      );
-    }
+    return true;
+  };
+  
+  /**
+   * Wykonanie oczekującej operacji drag-and-drop po zatwierdzeniu ostrzeżeń
+   */
+  const executePendingDragOperation = () => {
+    if (!pendingDragOperation || !bomData) return;
     
-    switch (viewMode) {
-      case 'tree':
-        return (
-          <div className="p-4">
-            <div className="flex justify-between mb-3">
-              <div>
-                <button
-                  onClick={() => setIsDragEnabled(!isDragEnabled)}
-                  className={`px-3 py-1 mr-2 flex items-center text-sm ${
-                    isDragEnabled 
-                      ? 'bg-green-50 text-green-700 border border-green-200' 
-                      : 'bg-gray-100 text-gray-700 border border-gray-200'
-                  } rounded`}
-                  title={isDragEnabled ? "Wyłącz drag & drop" : "Włącz drag & drop"}
-                >
-                  <MoveHorizontal size={16} className="mr-1" />
-                  {isDragEnabled ? "Drag & Drop włączony" : "Drag & Drop wyłączony"}
-                </button>
-              </div>
-              <div>
-                <button
-                  onClick={handleAddItem}
-                  className="px-3 py-1 flex items-center text-sm bg-primary-50 hover:bg-primary-100 text-primary-700 rounded border border-primary-200"
-                  disabled={!selectedBom}
-                  title="Dodaj nowy element do BOM"
-                >
-                  <FilePlus size={16} className="mr-1" />
-                  Dodaj element
-                </button>
-              </div>
-            </div>
+    // Implementacja przeniesienia elementu
+    const { sourceId, targetId } = pendingDragOperation;
+    
+    // Funkcja do przenoszenia elementu w drzewie
+    const moveItemInTree = (items: BomItemType[]): [BomItemType[], BomItemType | null] => {
+      let sourceItem: BomItemType | null = null;
+      
+      // Funkcja do usuwania elementu z jego obecnej lokalizacji
+      const removeItem = (items: BomItemType[], itemId: string): [BomItemType[], BomItemType | null] => {
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].id === itemId) {
+            sourceItem = JSON.parse(JSON.stringify(items[i]));
+            items.splice(i, 1);
+            return [items, sourceItem];
+          }
+          
+          if (items[i].children && items[i].children.length > 0) {
+            const [newChildren, found] = removeItem(items[i].children, itemId);
+            if (found) {
+              items[i].children = newChildren;
+              return [items, found];
+            }
+          }
+        }
+        return [items, null];
+      };
+      
+      // Funkcja do dodawania elementu do nowej lokalizacji
+      const addItem = (items: BomItemType[], targetId: string, item: BomItemType): boolean => {
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].id === targetId) {
+            if (!items[i].children) {
+              items[i].children = [];
+            }
             
-            {isDragEnabled ? (
-              <BomTreeViewDraggable 
-                item={selectedBom.rootItem} 
-                expandedByDefault={true} 
-                onItemSelect={handleItemSelect}
-                selectedItemId={selectedItem?.id}
-                onDrop={handleItemDrop}
-              />
-            ) : (
-              <BomTreeView 
-                item={selectedBom.rootItem} 
-                expandedByDefault={true} 
-                onItemSelect={handleItemSelect}
-                selectedItemId={selectedItem?.id}
-              />
-            )}
-          </div>
-        );
-      case 'table':
-        return (
-          <div className="p-4">
-            <p className="text-gray-500 italic">Widok tabelaryczny zostanie dodany w przyszłej wersji.</p>
-          </div>
-        );
-      case 'details':
-        return (
-          <div className="p-4">
-            <h3 className="text-lg font-semibold mb-4">Szczegóły struktury BOM</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500">ID</p>
-                <p>{selectedBom.id}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Nazwa</p>
-                <p>{selectedBom.name}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Wersja</p>
-                <p>{selectedBom.version}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Status</p>
-                <p className={`${selectedBom.status === 'active' ? 'text-green-600' : 'text-amber-600'}`}>
-                  {selectedBom.status === 'active' ? 'Aktywny' : 
-                   selectedBom.status === 'draft' ? 'Wersja robocza' : 
-                   selectedBom.status === 'obsolete' ? 'Wycofany' : 
-                   selectedBom.status}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Data utworzenia</p>
-                <p>{new Date(selectedBom.createdAt).toLocaleDateString('pl-PL')}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Utworzony przez</p>
-                <p>{selectedBom.createdBy}</p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-sm text-gray-500">Opis</p>
-                <p>{selectedBom.description}</p>
-              </div>
-            </div>
-          </div>
-        );
-      default:
-        return null;
-    }
+            // Aktualizuj parentId
+            item.parentId = targetId;
+            items[i].children.push(item);
+            return true;
+          }
+          
+          if (items[i].children && items[i].children.length > 0) {
+            if (addItem(items[i].children, targetId, item)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      };
+      
+      // Usuń element źródłowy
+      const [itemsWithoutSource, removedItem] = removeItem(JSON.parse(JSON.stringify(items)), sourceId);
+      
+      // Jeśli znaleziono element źródłowy, dodaj go do celu
+      if (removedItem) {
+        addItem(itemsWithoutSource, targetId, removedItem);
+      }
+      
+      return [itemsWithoutSource, removedItem];
+    };
+    
+    const [newItems, _] = moveItemInTree(bomData.items);
+    
+    const newBomData = {
+      ...bomData,
+      items: newItems,
+      updatedAt: new Date().toISOString()
+    };
+    
+    setBomData(newBomData);
+    addToHistory(newBomData);
+    setValidationModalOpen(false);
+    setPendingDragOperation(null);
+    toast.success('Struktura BOM zaktualizowana pomyślnie');
   };
-
+  
+  // Renderowanie komponentu
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="border-b p-4 flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Struktura produktów (BOM)</h2>
-        <div className="flex space-x-2">
-          <button
-            onClick={handleCreateNew}
-            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded"
-            title="Nowa struktura BOM"
+    <div className="h-full flex flex-col">
+      {/* Pasek narzędzi */}
+      <div className="flex justify-between items-center p-2 border-b">
+        <div className="flex items-center space-x-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleUndo} 
+            disabled={historyIndex <= 0}
+            title="Cofnij"
           >
-            <Plus size={20} />
-          </button>
-          <button
-            onClick={handleEdit}
-            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={!selectedBom}
-            title="Edytuj strukturę BOM"
+            <Undo className="h-4 w-4 mr-1" />
+            <span className="sr-only">Cofnij</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleRedo} 
+            disabled={historyIndex >= history.length - 1}
+            title="Ponów"
           >
-            <Edit size={20} />
-          </button>
-          <button 
-            onClick={handleRefresh}
-            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded"
-            title="Odśwież"
+            <Redo className="h-4 w-4 mr-1" />
+            <span className="sr-only">Ponów</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => handleAddItem(null)}
+            title="Dodaj element główny"
           >
-            <RefreshCw size={20} />
-          </button>
-          <button 
-            onClick={handleExport}
-            disabled={!selectedBom}
-            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Eksportuj do JSON"
+            <Plus className="h-4 w-4 mr-1" />
+            <span>Dodaj</span>
+          </Button>
+          {selectedItem && (
+            <>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleEditItem}
+                title="Edytuj wybrany element"
+              >
+                <ChevronsRight className="h-4 w-4 mr-1" />
+                <span>Edytuj</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleAddItem(selectedItem.id)}
+                title="Dodaj element podrzędny"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                <span>Dodaj podrzędny</span>
+              </Button>
+            </>
+          )}
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => {/* Eksport do pliku */}}
+            title="Eksportuj BOM"
           >
-            <Download size={20} />
-          </button>
-          <button
-            onClick={() => setShowSidebar(!showSidebar)}
-            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded ml-2"
-            title={showSidebar ? "Ukryj panel szczegółów" : "Pokaż panel szczegółów"}
+            <FileDown className="h-4 w-4 mr-1" />
+            <span>Eksportuj</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => {/* Import z pliku */}}
+            title="Importuj BOM"
           >
-            {showSidebar ? <PanelRightClose size={20} /> : <PanelRightOpen size={20} />}
-          </button>
+            <FileUp className="h-4 w-4 mr-1" />
+            <span>Importuj</span>
+          </Button>
+          <Button 
+            variant="primary" 
+            size="sm" 
+            onClick={handleSave}
+            disabled={isSaving}
+            title="Zapisz BOM"
+          >
+            <Save className="h-4 w-4 mr-1" />
+            <span>{isSaving ? 'Zapisywanie...' : 'Zapisz'}</span>
+          </Button>
         </div>
       </div>
       
-      <div className="grid grid-cols-4">
-        {/* Sidebar with BOM list */}
-        <div className="col-span-1 border-r min-h-[600px]">
-          <div className="p-3 border-b">
-            <div className="relative">
-              <input 
-                type="text" 
-                placeholder="Szukaj..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              />
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+      {/* Główny obszar roboczy */}
+      <div className="flex-grow overflow-auto">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+          <TabsList className="px-4 py-2 border-b">
+            <TabsTrigger value="structure">Struktura</TabsTrigger>
+            <TabsTrigger value="metadata">Metadane</TabsTrigger>
+          </TabsList>
+          <TabsContent value="structure" className="h-full">
+            <div className="h-full flex flex-col md:flex-row overflow-hidden">
+              {/* Drzewo BOM z drag-and-drop */}
+              <div className="w-full md:w-1/2 p-4 overflow-auto border-r">
+                {bomData && (
+                  <BomTreeViewDraggable 
+                    items={bomData.items}
+                    onItemSelected={handleItemSelected}
+                    onItemsReordered={handleItemsReordered}
+                  />
+                )}
+              </div>
+              
+              {/* Panel szczegółów */}
+              <div className="w-full md:w-1/2 p-4 overflow-auto">
+                {selectedItem ? (
+                  <BomItemDetail 
+                    item={selectedItem}
+                    onEdit={handleEditItem}
+                    onAddChild={() => handleAddItem(selectedItem.id)}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                    <Clipboard className="h-12 w-12 mb-2" />
+                    <p>Wybierz element z drzewa BOM, aby zobaczyć szczegóły</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="overflow-y-auto max-h-[550px]">
-            {boms.filter(bom => 
-              bom.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              bom.id.toLowerCase().includes(searchTerm.toLowerCase())
-            ).map(bom => (
-              <div 
-                key={bom.id}
-                onClick={() => setSelectedBomId(bom.id)}
-                className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${selectedBomId === bom.id ? 'bg-primary-50' : ''}`}
-              >
-                <div className="font-medium">{bom.name}</div>
-                <div className="text-xs text-gray-500 flex justify-between">
-                  <span>ID: {bom.id}</span>
-                  <span>v{bom.version}</span>
-                </div>
-              </div>
-            ))}
-            
-            {boms.length === 0 && !loading && (
-              <div className="p-4 text-center text-gray-500">
-                Brak struktur BOM
-              </div>
+          </TabsContent>
+          <TabsContent value="metadata" className="p-4">
+            {bomData && (
+              <BomMetadataForm 
+                metadata={bomData}
+                onChange={handleMetadataChange}
+              />
             )}
-          </div>
-        </div>
-        
-        {/* Main content area with optional sidebar */}
-        <div className={`${showSidebar ? 'col-span-2' : 'col-span-3'}`}>
-          {/* View mode selector */}
-          <div className="flex border-b">
-            <button 
-              onClick={() => setViewMode('tree')}
-              className={`flex items-center px-4 py-2 border-r ${viewMode === 'tree' ? 'bg-primary-50 text-primary-600' : 'hover:bg-gray-50'}`}
-            >
-              <Eye size={16} className="mr-2" />
-              Drzewo
-            </button>
-            <button 
-              onClick={() => setViewMode('table')}
-              className={`flex items-center px-4 py-2 border-r ${viewMode === 'table' ? 'bg-primary-50 text-primary-600' : 'hover:bg-gray-50'}`}
-            >
-              <Table size={16} className="mr-2" />
-              Tabela
-            </button>
-            <button 
-              onClick={() => setViewMode('details')}
-              className={`flex items-center px-4 py-2 ${viewMode === 'details' ? 'bg-primary-50 text-primary-600' : 'hover:bg-gray-50'}`}
-            >
-              <FileText size={16} className="mr-2" />
-              Szczegóły
-            </button>
-          </div>
-          
-          {/* Content area */}
-          {renderContent()}
-        </div>
-        
-        {/* Details sidebar */}
-        {showSidebar && (
-          <div className="col-span-1 border-l min-h-[600px] overflow-y-auto">
-            <BomItemDetail 
-              item={selectedItem} 
-              onClose={() => setSelectedItem(null)} 
-              onEdit={handleEditItem}
-            />
-          </div>
-        )}
+          </TabsContent>
+        </Tabs>
       </div>
-
-      {/* Add item modal */}
-      <BomItemAddModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSave={handleSaveNewItem}
-        parentItem={selectedItem}
-      />
-
-      {/* Edit item modal */}
-      <BomItemEditModal
-        isOpen={showEditModal}
+      
+      {/* Modalne okna */}
+      {isAddModalOpen && (
+        <BomItemAddModal 
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          parentId={parentIdForAdd}
+          onItemAdded={handleItemAdded}
+        />
+      )}
+      
+      {isEditModalOpen && selectedItem && (
+        <BomItemEditModal 
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          item={selectedItem}
+          onItemUpdated={handleItemUpdated}
+          onItemDeleted={handleItemDeleted}
+        />
+      )}
+      
+      {/* Modal błędów walidacji */}
+      <BomErrorModal 
+        isOpen={validationModalOpen}
         onClose={() => {
-          setShowEditModal(false);
-          setItemToEdit(null);
+          setValidationModalOpen(false);
+          setPendingDragOperation(null);
         }}
-        onSave={handleSaveEditedItem}
-        onDelete={handleDeleteItem}
-        item={itemToEdit}
+        validationResult={validationResult}
+        sourceItem={pendingDragOperation?.sourceItem}
+        targetItem={pendingDragOperation?.targetItem}
       />
     </div>
   );
